@@ -39,6 +39,7 @@ pipeline {
         stage('checkout') {
             steps {
                 checkout scm
+                sh "git checkout 2526454c2f3172349011b31dcefd578d4d5aedf4"
                 sh 'git submodule update --init --recursive'
                 sh 'rm -rf artifacts && mkdir -p artifacts'
             }
@@ -89,8 +90,6 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'openshift-host', variable: 'OPENSHIFT_URL'), usernamePassword(credentialsId: 'openshift-credentials', passwordVariable: 'OPENSHIFT_PASSWD', usernameVariable: 'OPENSHIFT_USER')]) {
-                    sh "git checkout tags/0.15.3"
-                    sh "git checkout master -- templates/Makefile"
                     sh 'make -C templates || true'
                     sh 'sudo cp ./systemtests/web_driver/* /usr/bin'
                     sh 'Xvfb :10 -ac &'
