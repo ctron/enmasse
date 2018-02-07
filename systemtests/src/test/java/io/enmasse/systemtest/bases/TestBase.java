@@ -111,6 +111,7 @@ public abstract class TestBase extends SystemTestRunListener {
             amqpClientFactory.close();
 
             for (AddressSpace addressSpace : addressSpaceList) {
+                logCollector.collectLogsTerminatedPods(addressSpace.getNamespace());
                 deleteAddressSpace(addressSpace);
             }
 
