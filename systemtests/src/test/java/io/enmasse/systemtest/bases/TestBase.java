@@ -65,7 +65,7 @@ public abstract class TestBase extends SystemTestRunListener {
     protected static final Environment environment = new Environment();
 
     protected static final Kubernetes kubernetes = Kubernetes.create(environment);
-    private static final GlobalLogCollector logCollector = new GlobalLogCollector(kubernetes,
+    protected static final GlobalLogCollector logCollector = new GlobalLogCollector(kubernetes,
             new File(environment.testLogDir()));
     protected static final AddressApiClient addressApiClient = new AddressApiClient(kubernetes);
 
@@ -111,7 +111,6 @@ public abstract class TestBase extends SystemTestRunListener {
             amqpClientFactory.close();
 
             for (AddressSpace addressSpace : addressSpaceList) {
-                logCollector.collectLogsTerminatedPods(addressSpace.getNamespace());
                 deleteAddressSpace(addressSpace);
             }
 

@@ -93,6 +93,7 @@ public abstract class TestBaseWithShared extends TestBase {
 
     @After
     public void teardownShared() throws Exception {
+        logCollector.collectLogsTerminatedPods(sharedAddressSpace.getNamespace());
         setAddresses(sharedAddressSpace);
     }
 
