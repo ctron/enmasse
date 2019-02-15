@@ -21,7 +21,7 @@ fi
 echo "Building EnMasse with tag $TAG, version $VERSION from $BRANCH. PR: $PULL_REQUEST"
 make clean
 
-make
+make MAVEN_ARGS=-Pspotbugs
 
 make docu_html
 

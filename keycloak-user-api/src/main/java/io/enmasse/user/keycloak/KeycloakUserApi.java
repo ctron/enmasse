@@ -240,6 +240,8 @@ public class KeycloakUserApi implements UserApi {
                 Objects.requireNonNull(auth.getFederatedUserid(), "'federatedUserid' must be set for 'federated' type");
                 Objects.requireNonNull(auth.getFederatedUsername(), "'federatedUsername' must be set for 'federated' type");
                 break;
+            default:
+                break;
         }
     }
 
@@ -275,7 +277,7 @@ public class KeycloakUserApi implements UserApi {
 
     /**
      * Create the set of desired groups.
-     * 
+     *
      * @param user The user to create the groups for.
      * @return A set of groups.
      */
@@ -345,6 +347,8 @@ public class KeycloakUserApi implements UserApi {
                         break;
                     case federated:
                         setFederatedIdentity(realm.users().get(userRep.getId()), user.getSpec().getAuthentication());
+                        break;
+                    default:
                         break;
                 }
             }
@@ -495,7 +499,7 @@ public class KeycloakUserApi implements UserApi {
 
     /**
      * Test if a realm as has specific attribute.
-     * 
+     *
      * @param realm The realm to test.
      * @param attributeName The attribute to test.
      * @param attributeValue The expected value. May be {@code null}, in which case the attribute value
@@ -636,7 +640,7 @@ public class KeycloakUserApi implements UserApi {
         });
 
     }
-    
+
 
     public static String decodePart(final String part) {
         try {
