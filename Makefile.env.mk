@@ -5,7 +5,8 @@ DOCKER          ?= docker
 PROJECT_PREFIX  ?= enmasse
 PROJECT_NAME    ?= $(shell basename $(CURDIR))
 COMMIT 			?= $(shell git rev-parse HEAD)
-VERSION         ?= $(shell grep "release.version" $(TOPDIR)/pom.properties| cut -d'=' -f2) MAVEN_VERSION   ?= $(shell grep "maven.version" $(TOPDIR)/pom.properties| cut -d'=' -f2)
+VERSION         ?= $(shell grep "release.version" $(TOPDIR)/pom.properties| cut -d'=' -f2)
+MAVEN_VERSION   ?= $(shell grep "maven.version" $(TOPDIR)/pom.properties| cut -d'=' -f2)
 TAG             ?= latest
 
 # Image settings
