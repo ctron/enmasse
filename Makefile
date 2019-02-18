@@ -7,8 +7,9 @@ IOT_DOCKER_DIRS  = iot/qdr-proxy-configurator iot/iot-operator iot/iot-gc
 FULL_BUILD       = true
 
 GO_TARGETS       = iot/qdr-proxy-configurator/qdr-proxy-configurator iot/iot-operator/iot-operator iot/iot-gc/iot-gc
-GOPATH           = $(TOPDIR)/go
-GOPRJ            = $(GOPATH)/src/github.com/enmasseproject/enmasse
+GOPATH          := $(TOPDIR)/go
+GOPRJ           := $(GOPATH)/src/github.com/enmasseproject/enmasse
+export GOPATH
 
 DOCKER_TARGETS   = docker_build docker_tag docker_push clean
 BUILD_TARGETS    = init build test package $(DOCKER_TARGETS) coverage
