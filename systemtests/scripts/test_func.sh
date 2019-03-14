@@ -115,7 +115,7 @@ function teardown_test() {
     if [[ ${CMD} == "oc" ]]; then
         ansible-playbook -i ${CURDIR}/../ansible/inventory/systemtests.inventory ${CURDIR}/../../ansible/playbooks/openshift/uninstall.yml --extra-vars "{\"namespace\": \"${KUBERNETES_NAMESPACE}\"}"
     fi
-    ${CMD} delete namespace ${PROJECT_NAME}
+    ${CMD} delete --timeout=10 namespace ${PROJECT_NAME}
     info "End of teardown"
 }
 
