@@ -2,7 +2,7 @@
 localhost ansible_connection=local
 
 [enmasse:vars]
-namespace=enmasse-infra
+namespace=amq-online-images
 enable_rbac=True
 api_server=True
 register_api_server=True

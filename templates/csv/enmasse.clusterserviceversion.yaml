@@ -10,7 +10,7 @@ metadata:
     certified: "false"
     description: ${LONG_PRODUCT_NAME} provides messaging as a managed service on ${PLATFORM}
     containerImage: ${CONTROLLER_MANAGER_IMAGE}
-    createdAt: 2019-02-19T00:00:00Z
+    createdAt: 2019-04-02
     capabilities: Seamless Upgrades
     repository: ${REPOSITORY}
     support: ${MAINTAINER}

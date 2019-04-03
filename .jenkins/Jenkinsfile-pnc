@@ -1,0 +1,168 @@
+#!/usr/bin/env groovy
+
+def lib = evaluate readTrusted('.jenkins/jenkins-functions.groovy')
+
+pipeline {
+// Parameters are commented because job DSL set the default parameters
+//    parameters {
+//        //execute all tests as default for each new Pull request
+//        string(name: 'GIT_TAG', defaultValue: 'amq-maas', description: 'Git tag building from')
+//        string(name: 'BUILD_CONFIG', defaultValue: 'amq-online-ci', description: 'PNC build config to use')
+//        string(name: 'BREW_TAG', defaultValue: 'pnc-jb-amqonline-1.0', description: 'Brew tag to push artifacts to')
+//        string(name: 'CE_BRANCH', defaultValue: 'amq-online-10-dev', description: 'amq-online-images branch to use')
+//        string(name: 'AGENT_LABEL', defaultValue: 'amq-online-jdk11', description: 'label of agent for build')
+//    }
+    options {
+        timeout(time: 5, unit: 'HOURS')
+    }
+    environment {
+        PNC_SA_ID = credentials('pnc-serviceaccount-id')
+        PNC_SA_SECRET = credentials('pnc-serviceaccount-secret')
+    }
+    agent {
+        node {
+            label "${params.AGENT_LABEL}"
+        }
+    }
+    stages {
+        stage('wait for agent ready') {
+            steps {
+                script {
+                    lib.waitUntilAgentReady()
+                }
+            }
+        }
+        stage('clean') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('setup git config') {
+            steps {
+                sh 'git config --global push.default simple'
+                sh 'git config --global user.name "AMQ Online CI"'
+                sh 'git config --global user.email amq-online-ci@redhat.com'
+            }
+        }
+        stage('checkout') {
+            steps {
+                dir('enmasse') {
+                    checkout scm
+                }
+                dir('amq-online-images') {
+                    checkout([
+                            $class           : 'GitSCM',
+                            branches         : [[name: "*/${env.CE_BRANCH}"]],
+                            userRemoteConfigs: [[credentialsId: 'amq-online-ci-ssh-key', url: 'git@github.com:jboss-container-images/amq-online-images.git']]
+                    ])
+                    sh "git checkout ${env.CE_BRANCH}"
+                }
+            }
+        }
+        stage('setup build config') {
+            steps {
+                dir('enmasse') {
+                    withCredentials([file(credentialsId: 'kerberos-keytab', variable: 'KRB_KEYTAB')]) {
+                        sh "sudo pip install pnc_cli"
+                        sh "mkdir -p $HOME/.config/pnc-cli"
+                        sh "./release-scripts/generate-pnc-cli-conf.sh ${env.PNC_SA_ID} ${env.PNC_SA_SECRET} > $HOME/.config/pnc-cli/pnc-cli.conf"
+                        sh "./release-scripts/setup-image-build-config.sh $KRB_KEYTAB"
+                    }
+                }
+            }
+        }
+        stage('run PNC build') {
+            steps {
+                timeout(time: 3, unit: 'HOURS') {
+                    dir('enmasse') {
+                        script {
+                            sh "./release-scripts/run-pnc-build.sh ${env.BUILD_CONFIG}"
+                            def BUILD_ID = readFile("build_id.txt").trim()
+                            def MAVEN_VERSION = readFile("scm_revision.txt").trim()
+                            def BUILD_VERSION = readFile("scm_revision.txt").trim().replace("-", "_")
+                            echo "Performed build with with id ${BUILD_ID}, maven version ${MAVEN_VERSION} and build version ${BUILD_VERSION}"
+                        }
+                    }
+                }
+            }
+        }
+        stage('push artifacts to BREW') {
+            steps {
+                timeout(time: 30, unit: 'MINUTES') {
+                    dir('enmasse') {
+                        script {
+                            def BUILD_ID = readFile("build_id.txt").trim()
+                            sh "./release-scripts/push-pnc-artifacts-to-brew.sh ${BUILD_ID} ${env.BREW_TAG}"
+                        }
+                    }
+                }
+            }
+        }
+        stage('update container images') {
+            steps {
+                dir('enmasse') {
+                    script {
+                        def MAVEN_VERSION = readFile("scm_revision.txt").trim()
+                        def BUILD_VERSION = readFile("scm_revision.txt").trim().replace("-", "_")
+                        sh "grep \"release.version\" pom.properties | cut -d'=' -f2 > release.version"
+                        def RELEASE_VERSION = readFile("release.version").trim()
+                        sh "./release-scripts/update-brew-artifacts.sh ${RELEASE_VERSION} ${BUILD_VERSION} ${MAVEN_VERSION} ../amq-online-images"
+                    }
+                }
+                dir('amq-online-images') {
+                    script {
+                        sh "rm -rf templates && mkdir -p templates"
+                        sh "./regenerate-templates.sh --tag ${env.GIT_TAG} https://code.engineering.redhat.com/gerrit/EnMasseProject/enmasse"
+                        sh "git add templates"
+                        sh "git commit -a -m 'Update templates and image files with new artifacts'"
+                    }
+                }
+            }
+        }
+        stage('build container images') {
+            when {
+                expression { params.BUILD_IMAGES }
+            }
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    dir('amq-online-images') {
+                        // This environment is needed to make 'odcs' use the system certificates
+                        sh "REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt make"
+                    }
+                }
+            }
+        }
+        stage('push container images') {
+            when {
+                expression { params.BUILD_IMAGES }
+            }
+            steps {
+                timeout(time: 3, unit: 'HOURS') {
+                    dir('amq-online-images') {
+                        withCredentials([string(credentialsId: 'docker-registry-host', variable: 'DOCKER_REGISTRY'), usernamePassword(credentialsId: 'docker-registry-credentials-amq7', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                            sh "$DOCKER login -u $DOCKER_USER -p $DOCKER_PASS $DOCKER_REGISTRY"
+                            sh "make DOCKER_REGISTRY=${DOCKER_REGISTRY} tagall"
+                            sh "make DOCKER_REGISTRY=${DOCKER_REGISTRY} pushall"
+                        }
+                    }
+                }
+            }
+        }
+        stage('push updated templates') {
+            steps {
+                dir('amq-online-images') {
+                    sshagent (credentials: ['amq-online-ci-ssh-key']) {
+                        sh "git push origin ${env.CE_BRANCH}"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            script {
+                lib.sendMail(env.MAILING_LIST, env.JOB_NAME, env.BUILD_URL)
+            }
+        }
+    }
+}

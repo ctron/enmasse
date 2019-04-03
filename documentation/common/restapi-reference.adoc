@@ -1,9 +1,9 @@
-= EnMasse REST API
+= AMQ Online REST API
 
 
 [[_overview]]
 == Overview
-This is the EnMasse API specification.
+This is the AMQ Online API specification.
 
 
 === Version information

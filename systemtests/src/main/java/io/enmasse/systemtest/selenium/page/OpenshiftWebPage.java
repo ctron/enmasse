@@ -212,11 +212,11 @@ public class OpenshiftWebPage implements IWebPage {
     }
 
     private void clickOnCreateBrokered() throws Exception {
-        selenium.clickOnItem(getServiceFromCatalog("EnMasse (brokered)"));
+        selenium.clickOnItem(getServiceFromCatalog("AMQ Online (brokered)"));
     }
 
     public void clickOnCreateStandard() throws Exception {
-        selenium.clickOnItem(getServiceFromCatalog("EnMasse (standard)"));
+        selenium.clickOnItem(getServiceFromCatalog("AMQ Online (standard)"));
     }
 
     public void next() throws Exception {

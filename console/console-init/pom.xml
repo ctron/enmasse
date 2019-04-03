@@ -65,7 +65,7 @@
               <workingDirectory>ui</workingDirectory>
               <environmentVariables>
                 <REACT_APP_VERSION>${project.version}</REACT_APP_VERSION>
-                <REACT_APP_NAME>EnMasse Console</REACT_APP_NAME>
+                <REACT_APP_NAME>AMQ Console</REACT_APP_NAME>
                 <REACT_APP_DOCS>${application.docs}</REACT_APP_DOCS>
               </environmentVariables>
               <arguments>run-script build</arguments>

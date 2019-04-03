@@ -14,7 +14,7 @@
 - name: Replace namespace in configuration
   replace:
     dest: "{{item.path}}"
-    regexp: "enmasse-infra"
+    regexp: "amq-online-infra"
     replace: "{{ namespace }}"
   with_items: "{{ yamls.files }}"
 - name: Find all monitoring yaml files
@@ -38,7 +38,10 @@
   when: '"none" in authentication_services'
 - import_role:
     name: standard_authservice
-  when: '"standard" in authentication_services'
+  when: '"standard" in authentication_services and not standard_authentication_service_postgresql'
+- import_role:
+    name: standard_authservice_postgresql
+  when: '"standard" in authentication_services and standard_authentication_service_postgresql'
 - import_role:
     name: example_plans
   when: install_example_plans

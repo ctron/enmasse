@@ -116,8 +116,70 @@ def loginOCUser(boolean setupClusterUser) {
     sh(script: "./systemtests/scripts/login_cluster_user.sh ${setupClusterUser}")
 }
 
+def installDependencies() {
+    sh(script: "ansible-playbook systemtests/ansible/playbooks/systemtests-dependencies.yml")
+}
+
+def copyTemplatesAndSetRegistries(String tag, String onlineRegistries, String brokerRouterRegistries) {
+    sh(script: "mkdir -p templates/build/enmasse-${tag}")
+    sh(script: "cp -r ../amq-online-images/templates/* templates/build/enmasse-${tag}")
+    sh(script: "./release-scripts/replace-image-pull-spec-registry.sh ${onlineRegistries} amq7/amq-online-1 templates/build/enmasse-${tag}")
+    sh(script: "./release-scripts/replace-image-pull-spec-registry.sh ${onlineRegistries} amq7-tech-preview/amq-online-1 templates/build/enmasse-${tag}")
+    sh(script: "./release-scripts/replace-image-pull-spec-registry.sh ${brokerRouterRegistries} amq7/amq-interconnect templates/build/enmasse-${tag}")
+    sh(script: "./release-scripts/replace-image-pull-spec-registry.sh ${brokerRouterRegistries} amq-broker-7 templates/build/enmasse-${tag}")
+}
+
+def copyStartTemplatesAndSetRegistries(String upgradeFromBranch) {
+    def bundleSuffix = upgradeFromBranch
+    if (upgradeFromBranch == "amq-online-10") {
+        bundleSuffix = "1.0"
+    }
+    sh(script: "mkdir -p templates/build/enmasse-${bundleSuffix}")
+    sh(script: "cp -r ../amq-online-images/templates/* templates/build/enmasse-${bundleSuffix}")
+    sh(script: "find templates/build/enmasse-${bundleSuffix}/install -type f -print0 | xargs -0 sed -i 's@ amq7\\/@ registry.redhat.io\\/amq7\\/@g'")
+    sh(script: "find templates/build/enmasse-${bundleSuffix}/install -type f -print0 | xargs -0 sed -i 's@ redhat-sso-7\\/@ registry.redhat.io\\/redhat-sso-7\\/@g'")
+    sh(script: "find templates/build/enmasse-${bundleSuffix}/install -type f -print0 | xargs -0 sed -i 's@ amq-broker-7\\/@ registry.redhat.io\\/amq-broker-7\\/@g'")
+    return bundleSuffix
+}
+
+def addTestNodeToOcpDns(String dnsIp, String installOcpBuildNumber) {
+    if (dnsIp != '') {
+        sh(script: "sudo sed -i \"1s@^@nameserver ${dnsIp} @\" /etc/resolv.conf")
+    } else {
+        step([$class     : 'CopyArtifact',
+              projectName: "install-openshift",
+              filter     : "**.txt",
+              selector   : specific("${installOcpBuildNumber}"),
+              target     : "${env.WORKSPACE}"])
+        sh(script: "sudo sed -i \"1s@^@nameserver `cat ${WORKSPACE}/dns-ip.txt` @\" /etc/resolv.conf")
+    }
+}
+
 def uninstallEnmasse(String tag, String namespace) {
     sh(script: "ansible-playbook templates/build/enmasse-${tag}/ansible/playbooks/openshift/uninstall.yml -i systemtests/ansible/inventory/systemtests.ocp4.inventory -e namespace=${namespace}")
+}
+
+def setUpOcp4() {
+    sh(script: "./systemtests/scripts/set_up_ocp4.sh")
+}
+
+def deleteImages(String registry) {
+    sh(script: "./systemtests/scripts/oc_delete_images.sh ${registry} amq-online-images")
+}
+
+def installOcp3(String jobName, String nodeSuffix, String containerRegistry) {
+    try {
+        def buildValue = build job: "${jobName}", wait: true, parameters: [
+                [$class: 'StringParameterValue', name: 'SUFFIX', value: "${nodeSuffix}"],
+                [$class: 'StringParameterValue', name: 'CONTAINER_REGISTRY', value: "${containerRegistry}"],
+        ]
+        env.OC_BUILD_NUMBER = "${buildValue.number}"
+        echo env.OC_BUILD_NUMBER
+    } catch(error) {
+        env.OC_BUILD_NUMBER = "${error}".split("#")[1].split(" ")[0]
+        echo env.OC_BUILD_NUMBER
+        throw new Exception("Install openshift failed")
+    }
 }
 
 return this

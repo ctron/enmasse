@@ -10,6 +10,7 @@ service_catalog=True
 secure_api_server=True
 keycloak_admin_password=admin
 authentication_services=["none", "standard"]
+standard_authentication_service_postgresql=False
 monitoring_infrastructure=False
 service_monitors=False
 enable_iot=False

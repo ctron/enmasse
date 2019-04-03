@@ -1,0 +1,71 @@
+#!/usr/bin/env groovy
+
+def lib = evaluate readTrusted('.jenkins/jenkins-functions.groovy')
+
+pipeline {
+    options {
+        timeout(time: 3, unit: 'HOURS')
+    }
+    agent {
+        node {
+            label "${params.AGENT_LABEL}"
+        }
+    }
+    stages {
+        stage('wait for agent ready') {
+            steps {
+                script {
+                    lib.waitUntilAgentReady()
+                }
+            }
+        }
+        stage('clean') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('checkout') {
+            steps {
+                dir('enmasse') {
+                    checkout scm
+                }
+                dir('amq-online-images') {
+                    checkout([
+                            $class           : 'GitSCM',
+                            branches         : [[name: "*/${env.CE_BRANCH}"]],
+                            userRemoteConfigs: [[credentialsId: 'amq-online-ci-ssh-key', url: 'git@github.com:jboss-container-images/amq-online-images.git']]
+                    ])
+                    sh "git checkout ${env.CE_BRANCH}"
+                }
+            }
+        }
+        stage('setup build config') {
+            steps {
+                dir('enmasse') {
+                    withCredentials([file(credentialsId: "${params.KERBEROS_KEYTAB_CREDENTIAL}", variable: 'KRB_KEYTAB')]) {
+                        sh "./release-scripts/setup-image-build-config.sh $KRB_KEYTAB \"${params.KERBEROS_PRINCIPAL}\""
+                    }
+                }
+            }
+        }
+        stage('trigger OSBS build') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    dir('amq-online-images') {
+                        // KWDEBUG
+                        sh "klist || true"
+                        // This environment is needed to make 'odcs' use the system certificates
+                        sh "yes | REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt make CEKIT_ARGS=\"${params.CEKIT_ARGS}\""
+                    }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            script {
+                lib.sendMail(env.MAILING_LIST, env.JOB_NAME, env.BUILD_URL)
+            }
+        }
+    }
+}
