@@ -57,6 +57,10 @@
                 <!-- Golang vendor folder -->
                 <exclude>go/**</exclude>
                 <exclude>vendor/**</exclude>
+
+                <!-- Downstream specific exclusions -->
+                <exclude>release-scripts/**</exclude>
+                <exclude>pme.yaml</exclude>
             </excludes>
         </fileSet>
     </fileSets>

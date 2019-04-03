@@ -102,9 +102,9 @@ func applyStandardAuthServiceDeployment(authservice *adminv1beta1.Authentication
 
 	install.ApplyInitContainer(deployment, "keycloak-plugin", func(container *corev1.Container) {
 		install.ApplyContainerImage(container, "keycloak-plugin", authservice.Spec.Standard.InitImage)
-		install.ApplyEnvSimple(container, "KEYCLOAK_DIR", "/opt/jboss/keycloak")
-		install.ApplyVolumeMountSimple(container, "keycloak-providers", "/opt/jboss/keycloak/providers", false)
-		install.ApplyVolumeMountSimple(container, "keycloak-configuration", "/opt/jboss/keycloak/standalone/configuration", false)
+		install.ApplyEnvSimple(container, "KEYCLOAK_DIR", "/opt/eap")
+		install.ApplyVolumeMountSimple(container, "keycloak-providers", "/opt/eap/providers", false)
+		install.ApplyVolumeMountSimple(container, "keycloak-configuration", "/opt/eap/standalone/configuration", false)
 		install.ApplyVolumeMountSimple(container, "standard-authservice-cert", "/opt/enmasse/cert", false)
 		install.ApplyEnvSimple(container, "KEYCLOAK_CONFIG_FILE", "standalone-"+string(authservice.Spec.Standard.Datasource.Type)+".xml")
 	})
@@ -117,9 +117,9 @@ func applyStandardAuthServiceDeployment(authservice *adminv1beta1.Authentication
 			containerMemoryRequest := qty.ScaledValue(resource.Mega)
 			jvmOptions += fmt.Sprintf(" -Xms%dm -Xmx%dm", containerMemoryRequest/2, containerMemoryRequest/2)
 		}
-		install.ApplyEnvSimple(container, "JAVA_OPTS", jvmOptions)
-		install.ApplyEnvSecret(container, "KEYCLOAK_USER", "admin.username", authservice.Spec.Standard.CredentialsSecret.Name)
-		install.ApplyEnvSecret(container, "KEYCLOAK_PASSWORD", "admin.password", authservice.Spec.Standard.CredentialsSecret.Name)
+		install.ApplyEnvSimple(container, "JAVA_OPTS_APPEND", jvmOptions)
+		install.ApplyEnvSecret(container, "SSO_ADMIN_USERNAME", "admin.username", authservice.Spec.Standard.CredentialsSecret.Name)
+		install.ApplyEnvSecret(container, "SSO_ADMIN_PASSWORD", "admin.password", authservice.Spec.Standard.CredentialsSecret.Name)
 
 		if authservice.Spec.Standard.Datasource.Type == adminv1beta1.PostgresqlDatasource {
 			install.ApplyEnvSimple(container, "DB_HOST", authservice.Spec.Standard.Datasource.Host)
@@ -128,8 +128,6 @@ func applyStandardAuthServiceDeployment(authservice *adminv1beta1.Authentication
 			install.ApplyEnvSecret(container, "DB_USERNAME", "database-user", authservice.Spec.Standard.Datasource.CredentialsSecret.Name)
 			install.ApplyEnvSecret(container, "DB_PASSWORD", "database-password", authservice.Spec.Standard.Datasource.CredentialsSecret.Name)
 		}
-
-		container.Args = []string{"start-keycloak.sh", "-b", "0.0.0.0", "-c", "standalone-openshift.xml"}
 
 		container.Ports = []corev1.ContainerPort{{
 			ContainerPort: 5671,
@@ -161,9 +159,9 @@ func applyStandardAuthServiceDeployment(authservice *adminv1beta1.Authentication
 		if authservice.Spec.Standard.Resources != nil {
 			container.Resources = *authservice.Spec.Standard.Resources
 		}
-		install.ApplyVolumeMountSimple(container, "keycloak-providers", "/opt/jboss/keycloak/providers", false)
-		install.ApplyVolumeMountSimple(container, "keycloak-configuration", "/opt/jboss/keycloak/standalone/configuration", false)
-		install.ApplyVolumeMountSimple(container, "keycloak-persistence", "/opt/jboss/keycloak/standalone/data", false)
+		install.ApplyVolumeMountSimple(container, "keycloak-providers", "/opt/eap/providers", false)
+		install.ApplyVolumeMountSimple(container, "keycloak-configuration", "/opt/eap/standalone/configuration", false)
+		install.ApplyVolumeMountSimple(container, "keycloak-persistence", "/opt/eap/standalone/data", false)
 		install.ApplyVolumeMountSimple(container, "standard-authservice-cert", "/opt/enmasse/cert", true)
 	})
 

@@ -2,10 +2,8 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
     <xsl:output method="html" encoding="utf-8" standalone="no" media-type="text/html" />
-    <xsl:param name="version"/>
-    <xsl:param name="applicationDisplayName"/>
-    <xsl:param name="projectArtifactId"/>
-    <xsl:param name="licenseAdviceText"/>
+    <xsl:param name="productIdentifier" select="'AMQ Online'"/>
+    <xsl:param name="licenseAdviceText" select="'The following material has been provided for informational purposes only, and should not be relied upon or construed as a legal opinion or legal advice.'"/>
     <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz '" />
     <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ!'" />
 
@@ -39,7 +37,7 @@
                 </style>
             </head>
             <body>
-                <h2><xsl:value-of select="$applicationDisplayName"/><xsl:text>/</xsl:text><xsl:value-of select="$projectArtifactId"/><xsl:text>:</xsl:text><xsl:value-of select="$version"/></h2>
+                <h2><xsl:value-of select="$productIdentifier"/></h2>
                 <xsl:if test="$licenseAdviceText">
                     <p><xsl:value-of select="$licenseAdviceText"/></p>
                 </xsl:if>
@@ -47,7 +45,6 @@
                     <tr>
                         <th>Package Name</th>
                         <th>Package Version</th>
-                        <th>Remote Licenses</th>
                         <th>Local Licenses</th>
                     </tr>
                     <xsl:apply-templates select="//dependencies/dependency">
@@ -82,56 +79,7 @@
                     </xsl:choose>
                 </xsl:for-each>
             </td>
-            <td>
-                <xsl:for-each select="licenses/license">
-                    <xsl:variable name="filename">
-                        <xsl:call-template name="remap-local-filename">
-                            <xsl:with-param name="packageName" select="../../packageName"/>
-                            <xsl:with-param name="name" select="name"/>
-                            <xsl:with-param name="url" select="url"/>
-                        </xsl:call-template>
-                    </xsl:variable>
-                    <a href="{$filename}">
-                        <xsl:value-of select="$filename"/>
-                    </a>
-                    <br/>
-                </xsl:for-each>
-            </td>
         </tr>
 
-    </xsl:template>
-
-    <xsl:template name="remap-local-filename">
-        <xsl:param name="packageName"/>
-        <xsl:param name="name"/>
-        <xsl:param name="url"/>
-
-        <xsl:variable name="path">
-            <xsl:call-template name="substring-after-last">
-                <xsl:with-param name="value" select="$url" />
-                <xsl:with-param name="search" select="'/'"/>
-            </xsl:call-template>
-        </xsl:variable>
-
-        <!-- There is insufficient information in the XML to reliably predict the name of the license file
-             all case.  This is a best-effort approach. -->
-        <xsl:value-of select="translate(translate(concat($packageName, '_', $path, '.txt'), $lowercase, $uppercase),' ','_')"/>
-    </xsl:template>
-
-    <xsl:template name="substring-after-last">
-        <xsl:param name="value" />
-        <xsl:param name="search"/>
-
-        <xsl:choose>
-            <xsl:when test="contains($value, $search)">
-                <xsl:call-template name="substring-after-last">
-                    <xsl:with-param name="value" select="substring-after($value, $search)" />
-                    <xsl:with-param name="search" select="$search" />
-                </xsl:call-template>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="$value" />
-            </xsl:otherwise>
-        </xsl:choose>
     </xsl:template>
 </xsl:stylesheet>

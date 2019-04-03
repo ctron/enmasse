@@ -16,5 +16,5 @@ spec:
   router:
     minReplicas: 1
     resources:
-      memory: 256Mi
+      memory: 512Mi
     linkCapacity: 250

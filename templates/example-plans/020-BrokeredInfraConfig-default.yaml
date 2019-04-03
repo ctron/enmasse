@@ -10,6 +10,6 @@ spec:
       memory: 512Mi
   broker:
     resources:
-      memory: 512Mi
+      memory: 2Gi
       storage: 5Gi
     addressFullPolicy: FAIL

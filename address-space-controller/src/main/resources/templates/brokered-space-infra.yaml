@@ -94,20 +94,20 @@ objects:
             value: ${AUTHENTICATION_SERVICE_CLIENT_SECRET}
           - name: AUTHENTICATION_SERVICE_SASL_INIT_HOST
             value: ${AUTHENTICATION_SERVICE_SASL_INIT_HOST}
-          - name: AMQ_NAME
-            value: serverData
           - name: HOME
             value: /var/run/artemis/split-1/
+          - name: AMQ_NAME
+            value: broker
           image: ${BROKER_IMAGE}
           imagePullPolicy: ${IMAGE_PULL_POLICY}
           command:
-          - /opt/apache-artemis/custom/bin/launch-broker.sh
+          - /opt/amq/custom/bin/launch-broker.sh
           livenessProbe:
             exec:
               command:
               - sh
               - -c
-              - $ARTEMIS_HOME/custom/bin/probe.sh
+              - $AMQ_HOME/custom/bin/probe.sh
             initialDelaySeconds: 120
           name: broker
           ports:
@@ -126,7 +126,7 @@ objects:
               command:
               - sh
               - -c
-              - $ARTEMIS_HOME/custom/bin/probe.sh
+              - $AMQ_HOME/custom/bin/probe.sh
             initialDelaySeconds: 10
           resources:
             limits:
@@ -139,7 +139,7 @@ objects:
           - mountPath: /etc/prometheus-config
             name: broker-prometheus-config
             readOnly: true
-          - mountPath: /opt/apache-artemis/custom
+          - mountPath: /opt/amq/custom
             name: broker-custom
             readOnly: false
         initContainers:
@@ -148,6 +148,8 @@ objects:
             value: ${INFRA_UUID}
           - name: ADDRESS_SPACE_TYPE
             value: brokered
+          - name: CERT_DIR
+            value: /etc/enmasse-certs
           - name: ADDRESS_FULL_POLICY
             value: ${BROKER_ADDRESS_FULL_POLICY}
           - name: GLOBAL_MAX_SIZE
@@ -161,7 +163,7 @@ objects:
           - name: AUTHENTICATION_SERVICE_SASL_INIT_HOST
             value: ${AUTHENTICATION_SERVICE_SASL_INIT_HOST}
           - name: AMQ_NAME
-            value: serverData
+            value: broker
           - name: HOME
             value: /var/run/artemis/split-1/
           image: ${BROKER_PLUGIN_IMAGE}
@@ -182,7 +184,7 @@ objects:
           - mountPath: /etc/prometheus-config
             name: broker-prometheus-config
             readOnly: true
-          - mountPath: /opt/apache-artemis/custom
+          - mountPath: /opt/amq/custom
             name: broker-custom
             readOnly: false
         volumes:
@@ -303,6 +305,8 @@ objects:
             value: ${ADDRESS_SPACE_NAMESPACE}
           - name: INFRA_UUID
             value: ${INFRA_UUID}
+          - name: ADDRESS_SPACE_TYPE
+            value: brokered
           - name: ENABLE_EVENT_LOGGER
             value: ${ENABLE_EVENT_LOGGER}
           - name: ADDRESS_SPACE_TYPE

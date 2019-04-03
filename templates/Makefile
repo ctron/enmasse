@@ -96,7 +96,7 @@ ansible_install: component_install
 	cp -r $(PACKAGE_ANSIBLE_DIR) $(INSTALLDIR)/
 	$(LN) -srf $(INSTALLDIR)/install/components $(INSTALLDIR)/ansible/playbooks/openshift/components
 
-ENMASSE_BUNDLE=$(PACKAGE_INSTALL_DIR)/bundles/enmasse
+ENMASSE_BUNDLE=$(PACKAGE_INSTALL_DIR)/bundles/amq-online
 $(ENMASSE_BUNDLE): replace_images
 	mkdir -p $(ENMASSE_BUNDLE)
 	for i in crds address-space-controller api-server api-service enmasse-operator; do \
@@ -117,7 +117,7 @@ $(IOT_BUNDLE): replace_images
 		cp $(BUILDDIR)/replaced/$$i/*.yaml $(IOT_BUNDLE)/; \
 	done
 
-OLM=$(PACKAGE_INSTALL_DIR)/olm/enmasse
+OLM=$(PACKAGE_INSTALL_DIR)/olm/amq-online
 $(OLM): replace_images
 	mkdir -p $(OLM)
 	for i in csv; do \
@@ -136,6 +136,9 @@ install: ansible_install component_install $(ENMASSE_BUNDLE) $(MONITORING_BUNDLE
 
 package: prepare install
 	tar -czf build/$(INSTALLNAME).tgz -C build $(INSTALLNAME)
+
+deploy:
+	mvn deploy:deploy-file -Dfile=build/$(INSTALLNAME).tgz
 
 coverage:
 

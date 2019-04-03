@@ -1,0 +1,195 @@
+#!/usr/bin/env groovy
+
+def lib = evaluate readTrusted('.jenkins/jenkins-functions.groovy')
+def report = evaluate readTrusted('.jenkins/jenkins-reporting.groovy')
+
+pipeline {
+    options {
+        timeout(time: 4, unit: 'HOURS')
+    }
+    environment {
+        TAG = "latest"
+        ARTIFACTS_DIR = 'artifacts'
+        OPENSHIFT_PROJECT = "amq-online-infra"
+        KUBERNETES_API_URL = "${params.OCP_API_URL}"
+        OPENSHIFT_PASSWD = "admin"
+        OPENSHIFT_USER = "admin"
+        KUBERNETES_DOMAIN = "${params.OCP_DOMAIN}"
+        REPORT_NAME = "surefire-reports"
+        PRODUCT_VERSION = "${params.PRODUCT_VERSION}"
+        PRODUCT_SUBVERSION = "${params.PRODUCT_SUBVERSION}"
+        OC_VERSION = "${params.OC_VERSION}"
+        REGISTRY_TYPE = "${params.CONTAINER_REGISTRY}"
+        DOCKER_REGISTRY = "${params.AMQ_ONLINE_CONTAINER_REGISTRY_URL}"
+        PRODUCT_DOCKER_REGISTRY = "${params.PRODUCT_CONTAINER_REGISTRY_URL}"
+        DOWNSTREAM = "true"
+        ARTIFACTS_URL = 'http://messaging-qe-repo.usersys.redhat.com:8081/artifactory'
+    }
+    agent {
+        node {
+            label "${params.AGENT_LABEL}"
+        }
+    }
+    stages {
+        stage('wait for agent ready') {
+            steps {
+                script {
+                    lib.waitUntilAgentReady()
+                }
+            }
+        }
+        stage('clean') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('checkout') {
+            steps {
+                dir('enmasse') {
+                    checkout scm
+                }
+                dir('amq-online-images') {
+                    checkout([
+                            $class           : 'GitSCM',
+                            branches         : [[name: "*/${env.CE_BRANCH}"]],
+                            userRemoteConfigs: [[url: 'https://github.com/jboss-container-images/amq-online-images.git']]
+                    ])
+                }
+                dir('dtests-config') {
+                    checkout([
+                            $class                           : 'GitSCM',
+                            branches                         : [[name: "master"]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions                       : [[$class: 'CleanCheckout',
+                                                                 $class: 'RelativeTargetDirectory']],
+                            submoduleCfg                     : [],
+                            userRemoteConfigs                : [[url          : 'ssh+git://git@bitbucket.org/msgqe/dtests-config.git',
+                                                                 credentialsId: '46503a95-483b-42df-aeff-c4e2a7045169']],
+                    ])
+                }
+            }
+        }
+        stage('install openshift enterprise') {
+            when {
+                expression { params.INSTALL_OCP == 'true' }
+            }
+            steps {
+                script {
+                    lib.installOcp3("install-openshift", "amq-online-${BUILD_NUMBER}", "${env.REGISTRY_TYPE}")
+                }
+            }
+        }
+        stage('add localhost to the ocp domain') {
+            when {
+                anyOf {
+                    expression { params.INSTALL_OCP == 'true' }
+                    expression { params.OCP_DNS_IP != '' }
+                }
+            }
+            steps {
+                script {
+                    lib.addTestNodeToOcpDns(params.OCP_DNS_IP, env.OC_BUILD_NUMBER)
+                }
+            }
+        }
+        stage('Prepare upgrade templates') {
+            steps {
+                dir('enmasse') {
+                    script {
+                        lib.copyTemplatesAndSetRegistries(env.TAG, env.DOCKER_REGISTRY, env.PRODUCT_DOCKER_REGISTRY)
+                    }
+                }
+            }
+        }
+        stage('Prepare start templates') {
+            steps {
+                dir('amq-online-images') {
+                    script {
+                        sh(script: "git checkout ${params.START_TEMPLATES_BRANCH}")
+                    }
+                }
+                dir('enmasse') {
+                    script {
+                        env.BUNDLE_SUFFIX = lib.copyStartTemplatesAndSetRegistries(params.START_TEMPLATES_BRANCH)
+                    }
+                }
+            }
+        }
+        stage('login') {
+            steps {
+                dir('enmasse') {
+                    script {
+                        lib.loginOCUser(false)
+                    }
+                }
+            }
+        }
+        stage('install requirements') {
+            steps {
+                dir('enmasse') {
+                    script {
+                        lib.installDependencies()
+                    }
+                }
+            }
+        }
+        stage('run upgrade tests') {
+            environment {
+                UPGRADE_TEMPLATES = "${WORKSPACE}/enmasse/templates/build/enmasse-${env.TAG}"
+                START_TEMPLATES = "${WORKSPACE}/enmasse/templates/build/enmasse-${env.BUNDLE_SUFFIX}"
+            }
+            steps {
+                dir('enmasse') {
+                    script {
+                        catchError {
+                            lib.runSystemtests('systemtests-upgrade', params.TEST_CASE)
+                        }
+                    }
+                }
+            }
+        }
+        stage('push data into artifactory') {
+            when {
+                expression { params.REPORT_RESULTS == 'true' }
+            }
+            steps {
+                script {
+                    report.pushJunitArtifacts(env.ARTIFACTS_URL, env.PRODUCT_VERSION, env.REPORT_NAME, BUILD_TAG)
+                }
+            }
+        }
+        stage('trigger Polarion reporter job') {
+            when {
+                expression { params.REPORT_RESULTS == 'true' }
+            }
+            steps {
+                script {
+                    def REPORT_SUFFIX = "-upgrade"
+                    def PARAMS = "report_data/product/maas/${env.PRODUCT_VERSION}/${env.PRODUCT_SUBVERSION}/${env.OC_VERSION}${REPORT_SUFFIX}/polarion_executor_params.json"
+                    def REPORT_FILE_URL = "${env.ARTIFACTS_URL}/enmasse-test-results/${env.PRODUCT_VERSION}/${env.REPORT_NAME}_${BUILD_TAG}.zip"
+                    report.triggerReporting(REPORT_FILE_URL, PARAMS, env.PRODUCT_VERSION, env.PRODUCT_SUBVERSION, env.OC_VERSION)
+                }
+            }
+        }
+    }
+    post {
+        always {
+            dir('enmasse') {
+                script {
+                    lib.postAction(env.ARTIFACTS_DIR)
+                    if (params.INSTALL_OCP == 'true') {
+                        build job: 'delete-openshift', wait: false, parameters: [
+                                [$class: 'StringParameterValue', name: 'SUFFIX', value: "amq-online-${BUILD_NUMBER}"],
+                                [$class: 'StringParameterValue', name: 'OC_BUILD_NUMBER', value: "${env.OC_BUILD_NUMBER}"],
+                        ]
+                    }
+                }
+            }
+        }
+        failure {
+            script {
+                lib.sendMail(env.MAILING_LIST, env.JOB_NAME, env.BUILD_URL)
+            }
+        }
+    }
+}

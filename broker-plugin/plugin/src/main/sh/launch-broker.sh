@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BROKER_DIR=${ARTEMIS_HOME}
+BROKER_DIR=${AMQ_HOME}
 BROKER_CUSTOM_DIR=${BROKER_DIR}/custom
 sed -i '$ d' ${BROKER_DIR}/bin/launch.sh
 
