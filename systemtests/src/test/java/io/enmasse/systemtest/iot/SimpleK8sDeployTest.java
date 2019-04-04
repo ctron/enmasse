@@ -6,8 +6,6 @@
 package io.enmasse.systemtest.iot;
 
 import static io.enmasse.systemtest.TestTag.sharedIot;
-import static io.enmasse.systemtest.TestTag.smoke;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -147,7 +145,7 @@ public class SimpleK8sDeployTest {
     @Test
     public void testDeploy() throws Exception {
 
-        final TimeoutBudget budget = TimeoutBudget.ofDuration(Duration.ofMinutes(5));
+        final TimeoutBudget budget = TimeoutBudget.ofDuration(Duration.ofMinutes(10));
 
         try {
             TestUtils.waitUntilCondition("IoT Config to deploy", () -> allDeploymentsPresent(), budget);
