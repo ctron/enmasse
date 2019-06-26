@@ -101,20 +101,6 @@ pipeline {
                 }
             }
         }
-        stage('Prepare start templates') {
-            steps {
-                dir('amq-online-images') {
-                    script {
-                        sh(script: "git checkout ${params.START_TEMPLATES_BRANCH}")
-                    }
-                }
-                dir('enmasse') {
-                    script {
-                        env.BUNDLE_SUFFIX = lib.copyStartTemplatesAndSetRegistries(params.START_TEMPLATES_BRANCH)
-                    }
-                }
-            }
-        }
         stage('login') {
             steps {
                 dir('enmasse') {
@@ -136,13 +122,22 @@ pipeline {
         stage('run upgrade tests') {
             environment {
                 UPGRADE_TEMPLATES = "${WORKSPACE}/enmasse/templates/build/enmasse-${env.TAG}"
-                START_TEMPLATES = "${WORKSPACE}/enmasse/templates/build/enmasse-${env.BUNDLE_SUFFIX}"
             }
             steps {
-                dir('enmasse') {
-                    script {
-                        catchError {
-                            lib.runSystemtests('systemtests-upgrade', params.TEST_CASE)
+                for (def startVersionBranch : params.START_TEMPLATES_BRANCH.split(",")) {
+                    dir('amq-online-images') {
+                        script {
+                            sh(script: "git checkout ${startVersionBranch}")
+                        }
+                    }
+                    dir('enmasse') {
+                        script {
+                            env.BUNDLE_SUFFIX = lib.copyStartTemplatesAndSetRegistries(startVersionBranch)
+                            catchError {
+                                println "Starting upgrade tests from version " + startVersion
+                                def envVarsString = "START_TEMPLATES=${WORKSPACE}/enmasse/templates/build/enmasse-${env.BUNDLE_SUFFIX}"
+                                lib.runSystemtests('systemtests-upgrade', params.TEST_CASE, envVarsString)
+                            }
                         }
                     }
                 }
