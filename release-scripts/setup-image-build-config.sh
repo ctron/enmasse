@@ -1,5 +1,6 @@
 #!/bin/sh
 KEYTAB=$1
+KERBEROS_PRINCIPAL=$2
 mkdir -p ${HOME}/.cekit
 cat<<EOF > ${HOME}/.cekit/config
 [common]
@@ -12,5 +13,6 @@ jboss-ocp = http://git.app.eng.bos.redhat.com/git/jboss-container-tools.git/plai
 jboss-rhscl = http://git.app.eng.bos.redhat.com/git/jboss-container-tools.git/plain/repos/jboss-rhel-rhscl.repo
 EOF
 
-kinit -t ${KEYTAB} host/amq-online-ci@REDHAT.COM
+echo Kerberos Principal: "${KERBEROS_PRINCIPAL}"
+kinit -t ${KEYTAB} "${KERBEROS_PRINCIPAL}"
 klist || true
