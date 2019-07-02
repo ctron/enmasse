@@ -23,3 +23,8 @@ cat > ~/.ssh/config << EOF
 StrictHostKeyChecking no
 EOF
 chmod 600 ~/.ssh/config
+
+git config --global user.email "amq-online-ci@redhat.com"
+git config --global user.name "AMQ Online CI"
+
+
