@@ -16,3 +16,10 @@ EOF
 echo Kerberos Principal: "${KERBEROS_PRINCIPAL}"
 kinit -t ${KEYTAB} "${KERBEROS_PRINCIPAL}"
 klist || true
+
+
+# Need to turn off the default ask behaviour
+cat > ~/.ssh/config << EOF
+StrictHostKeyChecking no
+EOF
+chmod 600 ~/.ssh/config
