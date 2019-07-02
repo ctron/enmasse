@@ -42,7 +42,7 @@ pipeline {
         stage('setup build config') {
             steps {
                 dir('enmasse') {
-                    withCredentials([file(credentialsId: '${params.KERBEROS_KEYTAB_CREDENTIAL}', variable: 'KRB_KEYTAB')]) {
+                    withCredentials([file(credentialsId: "${params.KERBEROS_KEYTAB_CREDENTIAL}", variable: 'KRB_KEYTAB')]) {
                         sh "./release-scripts/setup-image-build-config.sh $KRB_KEYTAB \"${params.KERBEROS_PRINCIPAL}\""
                     }
                 }
