@@ -124,17 +124,15 @@ pipeline {
                 UPGRADE_TEMPLATES = "${WORKSPACE}/enmasse/templates/build/enmasse-${env.TAG}"
             }
             steps {
-                for (def startVersionBranch : params.START_TEMPLATES_BRANCH.split(",")) {
-                    dir('amq-online-images') {
-                        script {
+                script {
+                    for (def startVersionBranch : params.START_TEMPLATES_BRANCH.split(",")) {
+                        dir('amq-online-images') {
                             sh(script: "git checkout ${startVersionBranch}")
                         }
-                    }
-                    dir('enmasse') {
-                        script {
+                        dir('enmasse') {
                             env.BUNDLE_SUFFIX = lib.copyStartTemplatesAndSetRegistries(startVersionBranch)
                             catchError {
-                                println "Starting upgrade tests from version " + startVersion
+                                println "Starting upgrade tests from version " + startVersionBranch
                                 def envVarsString = "START_TEMPLATES=${WORKSPACE}/enmasse/templates/build/enmasse-${env.BUNDLE_SUFFIX}"
                                 lib.runSystemtests('systemtests-upgrade', params.TEST_CASE, envVarsString)
                             }
