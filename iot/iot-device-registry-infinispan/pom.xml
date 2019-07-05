@@ -14,6 +14,11 @@
 
   <artifactId>iot-device-registry-infinispan</artifactId>
 
+  <properties>
+    <avro.version>1.9.0</avro.version>
+    <protostream.version>4.2.3.Final</protostream.version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <!-- required to pull in a 2.x version of jackson -->
@@ -21,6 +26,12 @@
         <groupId>org.apache.avro</groupId>
         <artifactId>avro</artifactId>
         <version>${avro.version}</version>
+      </dependency>
+      <!-- aligned version -->
+      <dependency>
+        <groupId>org.infinispan.protostream</groupId>
+        <artifactId>protostream</artifactId>
+        <version>${protostream.version}</version>
       </dependency>
       <!-- required due to CVE-2017-12629 -->
       <dependency>
