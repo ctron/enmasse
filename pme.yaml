@@ -13,4 +13,8 @@ pme:
     dependencyOverride.io.micrometer:*@*: 1.1.0.redhat-00002
     # required because hono doesn't use a.b.c as version 
     dependencyOverride.org.eclipse.hono:*@*: 1.0.0.M4-redhat-00001
+    dependencyOverride.org.keycloak:*@*: 4.8.3.Final-redhat-00001
+    dependencyOverride.org.apache.qpid:qpid-jms-client@*: 0.40.0.redhat-00001
+    dependencyOverride.org.apache.qpid:proton-j@*: 0.33.0.redhat-00001
+    dependencyOverride.org.apache.activemq:*@*: 2.7.0.redhat-00057
     dependencySource: BOMREST
