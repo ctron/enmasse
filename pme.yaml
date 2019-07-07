@@ -7,8 +7,6 @@ pme:
     dependencyOverride.dk.brics.automaton:*@*: 1.11.8.redhat-1
     # required to resolve 'Property replacement clash - updating property 'vertx.version' to both 3.6.3.redhat-00009 and 3.6.3.redhat-00010'
     dependencyOverride.io.vertx:*@*: 3.6.3.redhat-00009
-    # required because logback 1.0.13 is not productised.
-    dependencyOverride.ch.qos.logback:*@*: 1.2.3.redhat-00001 
     # required because micrometer-registry-prometheus:1.0.9 is not productised.
     dependencyOverride.io.micrometer:*@*: 1.1.0.redhat-00002 
     dependencySource: BOMREST
