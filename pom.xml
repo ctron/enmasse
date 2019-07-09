@@ -46,7 +46,6 @@
         <vertx.version>3.7.1</vertx.version>
         <slf4j.version>1.7.21</slf4j.version>
         <logback.version>1.2.3</logback.version>
-        <lucene.version>7.7.1</lucene.version>
         <hibernate.validator.version>6.0.10.Final</hibernate.validator.version>
         <jackson-annotations.version>2.9.9</jackson-annotations.version>
         <jackson-core.version>2.9.9</jackson-core.version>
