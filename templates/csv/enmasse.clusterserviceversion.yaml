@@ -501,6 +501,8 @@ spec:
                   value: "${CONSOLE_PROXY_KUBERNETES_IMAGE}"
                 - name: CONSOLE_HTTPD_IMAGE
                   value: "${CONSOLE_HTTPD_IMAGE}"
+                - name: FS_GROUP_OVERRIDE
+                  value: "185"
                 resources:
                   limits:
                     memory: 128Mi
@@ -738,6 +740,8 @@ spec:
                   value: ${MQTT_GATEWAY_IMAGE}
                 - name: MQTT_LWT_IMAGE
                   value: ${MQTT_LWT_IMAGE}
+                - name: FS_GROUP_OVERRIDE
+                  value: "185"
                 image: ${ADDRESS_SPACE_CONTROLLER_IMAGE}
                 imagePullPolicy: ${IMAGE_PULL_POLICY}
                 livenessProbe:
