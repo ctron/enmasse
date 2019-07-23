@@ -58,11 +58,13 @@ func (r *ReconcileIoTProject) reconcileManaged(ctx context.Context, request *rec
 
 	if err != nil {
 		log.Error(err, "Failed to create addresses")
+		return nil, err
 	}
 
 	// create a new user for protocol adapters
 
 	credentials, err := r.reconcileAdapterUser(ctx, project, strategy)
+
 	if err != nil {
 		log.Error(err, "failed to create adapter user")
 		return nil, err
