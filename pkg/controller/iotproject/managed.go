@@ -94,7 +94,8 @@ func (r *ReconcileIoTProject) reconcileAdapterUser(ctx context.Context, project 
 
 		log.V(2).Info("Reconcile messaging user", "MessagingUser", existingUser)
 
-		return r.reconcileAdapterMessagingUser(project, credentials, existingUser)
+		err := r.reconcileAdapterMessagingUser(project, credentials, existingUser)
+		return failFuse(project.Annotations, "reconcile-adapter-user", err)
 	})
 
 	return credentials, err

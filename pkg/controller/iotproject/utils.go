@@ -75,3 +75,20 @@ func StringOrDefault(value string, defaultValue string) string {
 		return value
 	}
 }
+
+func failFuse(annotations map[string]string, fuseName string, err error) error {
+
+	if err != nil {
+		return err
+	}
+
+	k := "fail-fuse/" + fuseName
+
+	v := annotations[k]
+	if v != "" {
+		delete(annotations, k)
+		return fmt.Errorf("error fuse blown: %s", k)
+	}
+
+	return err
+}

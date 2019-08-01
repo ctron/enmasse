@@ -158,9 +158,13 @@ func (r *ReconcileIoTProject) updateProjectStatusReady(ctx context.Context, requ
 
 func (r *ReconcileIoTProject) applyUpdate(ctx context.Context, status *iotv1alpha1.ExternalDownstreamStrategy, err error, request *reconcile.Request, project *iotv1alpha1.IoTProject) (reconcile.Result, error) {
 
+	// eval fuse error before updating
+	fuseErr := failFuse(project.Annotations, "status-update", nil)
+
 	if err != nil {
 
 		if util.IsNotReadyYetError(err) {
+			log.Info("Not ready yet. Reschedule...")
 			// if the resource is not ready yet, then we retry after a delay
 			return reconcile.Result{Requeue: true, RequeueAfter: time.Minute}, nil
 		}
@@ -171,6 +175,12 @@ func (r *ReconcileIoTProject) applyUpdate(ctx context.Context, status *iotv1alph
 	}
 
 	err = r.updateProjectStatusReady(ctx, request, project, status)
+
+	if err == nil && fuseErr != nil {
+		// only report fuse error in case of non-error
+		return reconcile.Result{}, fuseErr
+	}
+
 	return reconcile.Result{}, err
 }
 
