@@ -6,6 +6,7 @@
 package io.enmasse.iot.registry.infinispan.util;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -23,9 +24,20 @@ public final class MoreFutures {
     private MoreFutures() {}
 
     public static <T> void completeHandler(final Supplier<CompletableFuture<T>> supplier, final Handler<AsyncResult<T>> handler) {
+
+        // fail with NPE, as we have no one to report to
+
+        Objects.requireNonNull(handler);
+
         if (supplier == null) {
+
+            // report to handler that we failed
+
             handler.handle(Future.failedFuture(new NullPointerException("'future' to handle must not be 'null'")));
+
         }
+
+        // create the future
 
         final CompletableFuture<T> future;
         try {
@@ -36,6 +48,15 @@ public final class MoreFutures {
             return;
         }
 
+        // test for null
+
+        if ( future == null ) {
+            handler.handle(Future.failedFuture("Supplier failed to provide an operation future"));
+            return;
+        }
+
+        // hook up completion
+
         future.whenComplete((result, error) -> {
             log.debug("Result - {}", result, error);
             if (error == null) {
@@ -45,6 +66,7 @@ public final class MoreFutures {
                 handler.handle(Future.failedFuture(error));
             }
         });
+
     }
 
     public static CompletableFuture<Void> allOf(final List<CompletableFuture<?>> futures) {

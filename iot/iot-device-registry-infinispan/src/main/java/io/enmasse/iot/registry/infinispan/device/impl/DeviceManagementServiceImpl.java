@@ -33,6 +33,7 @@ import io.enmasse.iot.registry.infinispan.device.AbstractDeviceManagementService
 import io.enmasse.iot.registry.infinispan.device.data.DeviceInformation;
 import io.enmasse.iot.registry.infinispan.device.data.DeviceKey;
 import io.opentracing.Span;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 
 @Component
@@ -41,7 +42,7 @@ public class DeviceManagementServiceImpl extends AbstractDeviceManagementService
     private static final Logger log = LoggerFactory.getLogger(DeviceManagementServiceImpl.class);
 
     @Autowired
-    public DeviceManagementServiceImpl(final DeviceManagementCacheProvider managementProvider, final AdapterCredentialsCacheProvider adapterProvider) {
+    public DeviceManagementServiceImpl(final Vertx vertx, final DeviceManagementCacheProvider managementProvider, final AdapterCredentialsCacheProvider adapterProvider) {
         super(managementProvider, adapterProvider);
     }
 
