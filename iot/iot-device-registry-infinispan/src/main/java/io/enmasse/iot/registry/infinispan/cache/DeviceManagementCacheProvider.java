@@ -60,12 +60,14 @@ public class DeviceManagementCacheProvider extends AbstractCacheProvider {
                 .indexing()
                 .index(Index.PRIMARY_OWNER)
                 .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+                .addProperty("default.worker.execution", "async")
+                .addProperty("default.index_flush_interval", "500")
                 .addIndexedEntity(DeviceInformation.class)
                 .addIndexedEntity(DeviceCredential.class)
 
-                .persistence()
-                .addSingleFileStore()
-                .fetchPersistentState(true)
+//                .persistence()
+//                .addSingleFileStore()
+//                .fetchPersistentState(true)
 
                 .clustering()
                 .cacheMode(CacheMode.DIST_SYNC)
