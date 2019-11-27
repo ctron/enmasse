@@ -32,8 +32,6 @@ import org.eclipse.hono.auth.HonoPasswordEncoder;
 import org.eclipse.hono.client.ServiceInvocationException;
 import org.eclipse.hono.service.management.OperationResult;
 import org.eclipse.hono.service.management.credentials.CommonCredential;
-import org.eclipse.hono.service.management.credentials.PasswordCredential;
-import org.eclipse.hono.service.management.credentials.PasswordSecret;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -50,16 +48,9 @@ import io.opentracing.Span;
 @Component
 public class CredentialsManagementServiceImpl extends AbstractCredentialsManagementService {
 
-    private HonoPasswordEncoder passwordEncoder;
-
     @Autowired
-    public void setPasswordEncoder(final HonoPasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    @Autowired
-    public CredentialsManagementServiceImpl(final DeviceManagementCacheProvider managementProvider, final AdapterCredentialsCacheProvider adapterProvider) {
-        super(managementProvider, adapterProvider);
+    public CredentialsManagementServiceImpl(final DeviceManagementCacheProvider managementProvider, final AdapterCredentialsCacheProvider adapterProvider, final HonoPasswordEncoder passwordEncoder) {
+        super(managementProvider, adapterProvider, passwordEncoder);
     }
 
     @Override
@@ -80,13 +71,6 @@ public class CredentialsManagementServiceImpl extends AbstractCredentialsManagem
                     }
 
                     final DeviceInformation newValue = currentValue.getValue().newVersion();
-                    for(CommonCredential credential : credentials){
-                        try {
-                            checkCredential(credential);
-                        } catch (IllegalStateException e){
-                            return completedFuture(OperationResult.empty(HTTP_BAD_REQUEST));
-                        }
-                    }
                     newValue.setCredentials(toInternal(credentials));
 
                     final Collection<CredentialKey> affectedKeys;
@@ -221,19 +205,4 @@ public class CredentialsManagementServiceImpl extends AbstractCredentialsManagem
 
     }
 
-    /**
-     * Validate a secret and hash the password if necessary.
-     *
-     * @param credential The secret to validate.
-     * @throws IllegalStateException if the secret is not valid.
-     */
-    private void checkCredential(final CommonCredential credential) {
-        credential.checkValidity();
-        if (credential instanceof PasswordCredential) {
-            for (final PasswordSecret passwordSecret : ((PasswordCredential) credential).getSecrets()) {
-                passwordSecret.encode(passwordEncoder);
-                passwordSecret.checkValidity();
-            }
-        }
-    }
 }
