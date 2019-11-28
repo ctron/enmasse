@@ -16,6 +16,7 @@ data:
 
           <distributed-cache owners="3" mode="SYNC" remote-timeout="15000" name="devices">
              <locking isolation="READ_COMMITTED"/>
+             <transaction mode="NON_XA" locking="PESSIMISTIC"/>
              <indexing index="PRIMARY_OWNER">
                 <property name="default.indexmanager">
                             org.infinispan.query.indexmanager.InfinispanIndexManager
@@ -26,7 +27,7 @@ data:
           </distributed-cache>
 
           <distributed-cache owners="3" mode="SYNC" remote-timeout="15000" name="adapterCredentials">
-             <transaction mode="NONE"/>
+             <transaction mode="NON_XA" locking="PESSIMISTIC"/>
              <indexing index="NONE"/>
           </distributed-cache>
 
