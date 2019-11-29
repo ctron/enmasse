@@ -7,16 +7,18 @@ data:
     <infinispan
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd
-                                urn:infinispan:server:10.0 http://www.infinispan.org/schemas/infinispan-server-10.0.xsd"
+                                urn:infinispan:server:10.0 http://www.infinispan.org/schemas/infinispan-server-10.0.xsd
+                                urn:infinispan:config:store:rocksdb:10.0 http://www.infinispan.org/schemas/infinispan-cachestore-rocksdb-config-10.0.xsd"
             xmlns="urn:infinispan:config:10.0"
-            xmlns:server="urn:infinispan:server:10.0">
+            xmlns:server="urn:infinispan:server:10.0"
+            >
 
        <cache-container name="clustered" statistics="true">
           <transport cluster="infinispan" stack="kubernetes"/>
 
           <distributed-cache owners="3" mode="SYNC" remote-timeout="15000" name="devices">
              <locking isolation="READ_COMMITTED"/>
-             <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+             <transaction mode="NON_XA" locking="PESSIMISTIC" complete-timeout="120000" />
              <indexing index="PRIMARY_OWNER">
                 <property name="default.indexmanager">
                             org.infinispan.query.indexmanager.InfinispanIndexManager
@@ -24,10 +26,17 @@ data:
                 <property name="default.worker.execution">async</property>
                 <property name="default.index_flush_interval">500</property>
              </indexing>
+             <memory>
+                <!-- <binary strategy="REMOVE" size="134217728" eviction="MEMORY"/> -->
+                <object strategy="REMOVE" size="10000" />
+             </memory>
+             <persistence passivation="false">
+                <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:10.0" path="/opt/infinispan/server/data" shared="false" preload="false" />
+             </persistence>
           </distributed-cache>
 
           <distributed-cache owners="3" mode="SYNC" remote-timeout="15000" name="adapterCredentials">
-             <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+             <transaction mode="NON_XA" locking="PESSIMISTIC" complete-timeout="120000" />
              <indexing index="NONE"/>
           </distributed-cache>
 
