@@ -24,6 +24,8 @@ import org.eclipse.hono.service.management.credentials.CredentialsManagementServ
 import org.eclipse.hono.service.management.credentials.PasswordCredential;
 import org.eclipse.hono.service.management.credentials.PasswordSecret;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.base.Throwables;
@@ -40,6 +42,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
 public abstract class AbstractCredentialsManagementService implements CredentialsManagementService {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractCredentialsManagementService.class);
 
     private HonoPasswordEncoder passwordEncoder;
 
@@ -64,6 +68,7 @@ public abstract class AbstractCredentialsManagementService implements Credential
 
     AbstractCredentialsManagementService(final RemoteCache<DeviceKey, DeviceInformation> managementCache, final RemoteCache<CredentialKey, String> adapterCache,
             final HonoPasswordEncoder passwordEncoder, int hashThreadPoolSize) {
+        log.info("Password encoder thread pool size: {}", hashThreadPoolSize);
         this.encoderThreadPool = Executors.newFixedThreadPool(hashThreadPoolSize, new ThreadFactoryBuilder().setNameFormat("pwd-hash-thread-%d").build());
         this.adapterCache = adapterCache;
         this.managementCache = managementCache;
