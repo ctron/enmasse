@@ -21,7 +21,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
         },
         schemaFileName = "deviceRegistry.proto",
         schemaFilePath = "proto/",
-        schemaPackageName = "io.enmasse.iot.registry.infinispan.data")
+        schemaPackageName = "io.enmasse.iot.registry.infinispan.device.data")
 public interface DeviceManagementProtobufSchemaBuilder extends SerializationContextInitializer {
 
 }
