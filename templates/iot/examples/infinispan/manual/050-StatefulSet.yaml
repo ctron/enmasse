@@ -78,7 +78,7 @@ spec:
           name: infinispan-configuration
       - name: user-credential
         secret:
-          secretName: conn-auth-secret
+          secretName: infinispan-secret
           items:
             - key: users.properties
               path: users.properties
