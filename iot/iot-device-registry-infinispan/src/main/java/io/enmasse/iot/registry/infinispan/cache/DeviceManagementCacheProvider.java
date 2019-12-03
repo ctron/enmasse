@@ -31,6 +31,7 @@ public class DeviceManagementCacheProvider extends AbstractCacheProvider {
     @Autowired
     public DeviceManagementCacheProvider(final InfinispanProperties properties) throws Exception {
         super(properties);
+        log.info("Protobuf schema: {}", new DeviceManagementProtobufSchemaBuilderImpl().getProtoFile());
     }
 
     @Override
