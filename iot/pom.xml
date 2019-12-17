@@ -15,6 +15,7 @@
   <properties>
     <hono.version>1.0.0</hono.version>
     <infinispan.version>9.4.15.Final</infinispan.version>
+    <infinispan-protostream.version>4.3.0.Final</infinispan-protostream.version>
 
     <!-- align with Hono compatible versions -->
     <logback.version>1.2.3</logback.version>
@@ -29,14 +30,16 @@
     <module>iot-application-base</module>
     <module>iot-service-base</module>
     <module>iot-auth-service</module>
-    <module>iot-device-registry-file</module>
     <module>iot-http-adapter</module>
     <module>iot-lorawan-adapter</module>
     <module>iot-mqtt-adapter</module>
     <module>iot-sigfox-adapter</module>
     <module>iot-tenant-service</module>
     <module>iot-proxy-configurator</module>
+    <module>iot-device-registry-base</module>
+    <module>iot-device-registry-file</module>
     <module>iot-device-registry-infinispan</module>
+    <module>iot-device-registry-jdbc</module>
     <module>iot-infinispan-base</module>
     <module>iot-tenant-cleaner</module>
     <module>iot-utils</module>
@@ -60,6 +63,12 @@
       <dependency>
         <groupId>io.enmasse</groupId>
         <artifactId>iot-utils</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.enmasse</groupId>
+        <artifactId>iot-device-registry-base</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -158,7 +167,7 @@
       </dependency>
       <dependency>
         <groupId>org.infinispan.protostream</groupId>
-        <artifactId>protostream-processor</artifactId>
+        <artifactId>protostream</artifactId>
         <version>${infinispan-protostream.version}</version>
       </dependency>
 

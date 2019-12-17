@@ -3,7 +3,7 @@
  * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
  */
 
-package io.enmasse.iot.infinispan.device;
+package io.enmasse.iot.registry.device.data;
 
 import java.io.Serializable;
 import java.util.ArrayList;

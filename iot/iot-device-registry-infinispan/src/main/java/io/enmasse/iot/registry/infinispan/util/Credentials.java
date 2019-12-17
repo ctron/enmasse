@@ -22,7 +22,7 @@ import org.eclipse.hono.service.management.credentials.PasswordCredential;
 import org.eclipse.hono.util.Constants;
 import org.eclipse.hono.util.CredentialsConstants;
 
-import io.enmasse.iot.infinispan.device.DeviceCredential;
+import io.enmasse.iot.registry.device.data.DeviceCredential;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

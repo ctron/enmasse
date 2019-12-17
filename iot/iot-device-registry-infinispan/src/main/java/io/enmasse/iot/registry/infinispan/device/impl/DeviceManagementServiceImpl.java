@@ -29,9 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import io.enmasse.iot.infinispan.cache.DeviceManagementCacheProvider;
-import io.enmasse.iot.registry.infinispan.device.AbstractDeviceManagementService;
-import io.enmasse.iot.infinispan.device.DeviceInformation;
-import io.enmasse.iot.infinispan.device.DeviceKey;
+import io.enmasse.iot.registry.device.AbstractDeviceManagementService;
+import io.enmasse.iot.registry.device.data.DeviceInformation;
+import io.enmasse.iot.registry.device.data.DeviceKey;
 import io.opentracing.Span;
 import io.vertx.core.json.Json;
 

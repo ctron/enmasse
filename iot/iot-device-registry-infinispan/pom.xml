@@ -24,6 +24,10 @@
     </dependency>
     <dependency>
       <groupId>io.enmasse</groupId>
+      <artifactId>iot-device-registry-base</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.enmasse</groupId>
       <artifactId>iot-utils</artifactId>
     </dependency>
     <dependency>

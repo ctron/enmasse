@@ -21,7 +21,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.enmasse.iot.infinispan.device.DeviceKey;
+import io.enmasse.iot.registry.device.AbstractCredentialsManagementService;
+import io.enmasse.iot.registry.device.data.DeviceKey;
 import io.opentracing.Span;
 import io.opentracing.noop.NoopSpan;
 

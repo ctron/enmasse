@@ -24,9 +24,9 @@ import com.google.common.collect.Lists;
 import io.enmasse.iot.infinispan.cache.DeviceConnectionCacheProvider;
 import io.enmasse.iot.infinispan.cache.DeviceManagementCacheProvider;
 import io.enmasse.iot.infinispan.devcon.DeviceConnectionKey;
-import io.enmasse.iot.infinispan.device.DeviceInformation;
-import io.enmasse.iot.infinispan.device.DeviceKey;
-import io.enmasse.iot.infinispan.tenant.TenantHandle;
+import io.enmasse.iot.registry.device.data.DeviceInformation;
+import io.enmasse.iot.registry.device.data.DeviceKey;
+import io.enmasse.iot.registry.tenant.TenantHandle;
 import io.enmasse.iot.tools.cleanup.config.CleanerConfig;
 
 public class InfinispanTenantCleaner implements AutoCloseable {

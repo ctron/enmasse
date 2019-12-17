@@ -24,10 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import io.enmasse.iot.infinispan.config.InfinispanProperties;
-import io.enmasse.iot.infinispan.device.CredentialKey;
-import io.enmasse.iot.infinispan.device.DeviceCredential;
-import io.enmasse.iot.infinispan.device.DeviceInformation;
-import io.enmasse.iot.infinispan.device.DeviceKey;
+import io.enmasse.iot.registry.device.data.CredentialKey;
+import io.enmasse.iot.registry.device.data.DeviceCredential;
+import io.enmasse.iot.registry.device.data.DeviceInformation;
+import io.enmasse.iot.registry.device.data.DeviceKey;
 
 @Component
 public class DeviceManagementCacheProvider extends AbstractCacheProvider {

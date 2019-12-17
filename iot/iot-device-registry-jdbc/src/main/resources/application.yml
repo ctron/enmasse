@@ -1,0 +1,26 @@
+enmasse:
+  iot:
+
+    app:
+      maxInstances: 1
+
+    healthCheck:
+      insecurePortBindAddress: 0.0.0.0
+
+    registry:
+      amqp:
+        port: 25672
+        insecurePortEnabled: true
+        insecurePortBindAddress: 0.0.0.0
+        insecurePort: 25672
+      rest:
+        insecurePortEnabled: true
+        insecurePort: 28080
+        insecurePortBindAddress: 0.0.0.0
+      svc:
+        signing:
+          sharedSecret: 1234567890123456789012345678901234567890123456789012345678901234
+
+    credentials:
+      svc:
+        maxBcryptIterations: 10
