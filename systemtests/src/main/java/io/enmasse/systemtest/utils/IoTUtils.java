@@ -262,8 +262,9 @@ public class IoTUtils {
         // pre-fetch address spaces for later use
 
         var deletedAddressSpaces = initialAddressSpaces.stream()
-                .<AddressSpace>map(asName -> asClient.withName(asName).get())
-                .collect(Collectors.<AddressSpace, String, AddressSpace>toMap(
+                .map(asName -> asClient.withName(asName).get())
+                .filter(e -> e != null)
+                .collect(Collectors.toMap(
                         e -> e.getMetadata().getName(),
                         e -> e));
 
@@ -285,6 +286,10 @@ public class IoTUtils {
             return updated == null;
         }, Duration.ofMinutes(5), Duration.ofSeconds(10), () -> "IoT project failed to delete in time");
         log.info("IoTProject {} deleted", projectName);
+
+        // now verify that the address spaces had all been created
+
+        assertEquals(initialAddressSpaces, deletedAddressSpaces);
 
         // get the expected and actual address spaces
 
