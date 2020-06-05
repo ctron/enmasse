@@ -19,11 +19,12 @@ import org.junit.jupiter.api.Tag;
 import io.enmasse.systemtest.iot.DeviceCertificateManager;
 import io.enmasse.systemtest.iot.DeviceCertificateManager.Mode;
 import io.enmasse.systemtest.iot.IoTTestSession;
+import io.enmasse.systemtest.iot.amqp.StandardIoTAmqpTests;
 import io.enmasse.systemtest.iot.http.StandardIoTHttpTests;
 import io.enmasse.systemtest.iot.mqtt.StandardIoTMqttTests;
 
 @Tag(ISOLATED_IOT)
-public class X509EcAuthenticationTests implements StandardX509Cases, StandardIoTHttpTests, StandardIoTMqttTests {
+public class X509EcAuthenticationTests implements StandardX509Cases, StandardIoTHttpTests, StandardIoTMqttTests, StandardIoTAmqpTests {
 
     private static DeviceCertificateManager certificateManager;
     private static IoTTestSession session;

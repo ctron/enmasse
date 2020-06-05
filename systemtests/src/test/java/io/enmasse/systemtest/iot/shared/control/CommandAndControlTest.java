@@ -91,7 +91,7 @@ class CommandAndControlTest extends TestBase implements ITestIoTShared {
         this.authId = UUID.randomUUID().toString();
         this.password = UUID.randomUUID().toString();
         log.info("Registering device [deviceId]: {}, [authId]: {}, [password]: {}", deviceId, authId, password);
-        this.httpClient = new HttpAdapterClient(this.httpAdapterEndpoint, this.authId, sharedIoTResourceManager.getTenantId(), this.password);
+        this.httpClient = new HttpAdapterClient(null, this.httpAdapterEndpoint, this.authId, sharedIoTResourceManager.getTenantId(), this.password);
 
         // set up new random device
         this.registryClient.registerDevice(sharedIoTResourceManager.getTenantId(), this.deviceId);

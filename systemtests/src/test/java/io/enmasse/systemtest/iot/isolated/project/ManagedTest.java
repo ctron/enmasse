@@ -177,7 +177,7 @@ public class ManagedTest extends TestBase implements ITestIoTIsolated {
 
         final List<Message> otherMessages = new LinkedList<>();
         try (
-                var httpAdapterClient = new HttpAdapterClient(this.httpAdapterEndpoint, "auth1", tenant1, "password1");
+                var httpAdapterClient = new HttpAdapterClient(null, this.httpAdapterEndpoint, "auth1", tenant1, "password1");
                 var otherReceiver = MessageSendTester.ConsumerFactory.of(amqpClient, tenant2).start(Type.TELEMETRY, msg -> otherMessages.add(msg)) ) {
 
             new MessageSendTester()

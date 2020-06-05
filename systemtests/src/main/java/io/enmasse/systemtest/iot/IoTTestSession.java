@@ -40,13 +40,12 @@ import com.google.common.collect.Lists;
 import io.enmasse.address.model.AddressSpace;
 import io.enmasse.iot.model.v1.AdapterConfigFluent;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent;
-import io.enmasse.iot.model.v1.AdaptersConfigFluent.HttpNested;
+import io.enmasse.iot.model.v1.AdaptersConfigFluent.AmqpNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.LoraWanNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.MqttNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.SigfoxNested;
 import io.enmasse.iot.model.v1.IoTConfig;
 import io.enmasse.iot.model.v1.IoTConfigBuilder;
-import io.enmasse.iot.model.v1.IoTConfigFluent.SpecNested;
 import io.enmasse.iot.model.v1.IoTConfigSpecFluent.AdaptersNested;
 import io.enmasse.iot.model.v1.IoTProject;
 import io.enmasse.iot.model.v1.IoTProjectBuilder;
@@ -71,12 +70,24 @@ import io.enmasse.systemtest.utils.UserUtils;
 import io.enmasse.user.model.v1.Operation;
 import io.enmasse.user.model.v1.User;
 import io.enmasse.user.model.v1.UserAuthorizationBuilder;
+import io.fabric8.kubernetes.api.model.extensions.IngressRuleFluent.HttpNested;
+import io.vertx.core.Vertx;
+import io.vertx.proton.ProtonQoS;
 
 public final class IoTTestSession implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(IoTTestSession.class);
 
     public static enum Adapter {
+        AMQP {
+            @Override
+            public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
+                return Adapter.editAdapter(config, AdaptersConfigFluent::editOrNewAmqp, AmqpNested::endAmqp, a -> {
+                    consumer.accept(a);
+                    return a;
+                });
+            }
+        },
         HTTP {
             @Override
             public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
@@ -253,7 +264,6 @@ public final class IoTTestSession implements AutoCloseable {
          * @param tlsVersions The supported TLS versions.
          * @return The new instance. It will automatically be closed when the test session is being cleaned
          *         up.
-         * @throws Exception
          */
         public HttpAdapterClient createHttpAdapterClient(final Set<String> tlsVersions) throws Exception {
             if (this.key != null) {
@@ -277,11 +287,37 @@ public final class IoTTestSession implements AutoCloseable {
             }
         }
 
+        /**
+         * Create a new AMQP adapter client.
+         *
+         * @return The new instance. It will automatically be closed when the test session is being cleaned
+         *         up.
+         */
+        public AmqpAdapterClient createAmqpAdapterClient(final ProtonQoS qos) throws Exception {
+            return createAmqpAdapterClient(qos, null);
+        }
+
+        /**
+         * Create a new AMQP adapter client.
+         *
+         * @param tlsVersions The supported TLS versions.
+         * @return The new instance. It will automatically be closed when the test session is being cleaned
+         *         up.
+         */
+        public AmqpAdapterClient createAmqpAdapterClient(final ProtonQoS qos, final Set<String> tlsVersions) throws Exception {
+            if (this.key != null) {
+                return IoTTestSession.this.createAmqpAdapterClient(qos, this.key, this.certificate, tlsVersions);
+            } else {
+                return IoTTestSession.this.createAmqpAdapterClient(qos, this.authId, this.password, tlsVersions);
+            }
+        }
+
         public String getTenantId() {
             return IoTTestSession.this.getTenantId();
         }
     }
 
+    private final Vertx vertx;
     private final IoTConfig config;
     private final IoTProject project;
     private final Consumer<Throwable> exceptionHandler;
@@ -291,6 +327,7 @@ public final class IoTTestSession implements AutoCloseable {
     private final AmqpClient consumerClient;
 
     private IoTTestSession(
+            final Vertx vertx,
             final IoTConfig config,
             final IoTProject project,
             final DeviceRegistryClient registryClient,
@@ -298,6 +335,8 @@ public final class IoTTestSession implements AutoCloseable {
             final AmqpClient consumerClient,
             final Consumer<Throwable> exceptionHandler,
             final List<ThrowingCallable> cleanup) {
+
+        this.vertx = vertx;
 
         this.config = config;
         this.project = project;
@@ -331,7 +370,7 @@ public final class IoTTestSession implements AutoCloseable {
     private HttpAdapterClient createHttpAdapterClient(final PrivateKey key, final X509Certificate certificate, final Set<String> tlsVersions) throws Exception {
 
         var endpoint = Kubernetes.getInstance().getExternalEndpoint("iot-http-adapter");
-        var result = new HttpAdapterClient(endpoint, key, certificate, tlsVersions);
+        var result = new HttpAdapterClient(this.vertx, endpoint, key, certificate, tlsVersions);
         this.cleanup.add(() -> result.close());
 
         return result;
@@ -341,8 +380,30 @@ public final class IoTTestSession implements AutoCloseable {
     private HttpAdapterClient createHttpAdapterClient(final String authId, final String password, final Set<String> tlsVersions) throws Exception {
 
         var endpoint = Kubernetes.getInstance().getExternalEndpoint("iot-http-adapter");
-        var result = new HttpAdapterClient(endpoint, authId, getTenantId(), password, tlsVersions);
+        var result = new HttpAdapterClient(this.vertx, endpoint, authId, getTenantId(), password, tlsVersions);
         this.cleanup.add(() -> result.close());
+
+        return result;
+
+    }
+
+    private AmqpAdapterClient createAmqpAdapterClient(final ProtonQoS qos, final PrivateKey key, final X509Certificate certificate, final Set<String> tlsVersions) throws Exception {
+
+        var endpoint = Kubernetes.getInstance().getExternalEndpoint("iot-amqp-adapter");
+        var result = new AmqpAdapterClient(this.vertx, qos, endpoint, key, certificate, tlsVersions);
+        this.cleanup.add(() -> result.close());
+        result.connect();
+
+        return result;
+
+    }
+
+    private AmqpAdapterClient createAmqpAdapterClient(final ProtonQoS qos, final String authId, final String password, final Set<String> tlsVersions) throws Exception {
+
+        var endpoint = Kubernetes.getInstance().getExternalEndpoint("iot-amqp-adapter");
+        var result = new AmqpAdapterClient(this.vertx, qos, endpoint, authId, getTenantId(), password, tlsVersions);
+        this.cleanup.add(() -> result.close());
+        result.connect();
 
         return result;
 
@@ -535,6 +596,9 @@ public final class IoTTestSession implements AutoCloseable {
 
                 // create IoT config
 
+                final Vertx vertx = Vertx.factory.vertx();
+                cleanup.add(vertx::close);
+
                 if (!Environment.getInstance().skipCleanup()) {
                     cleanup.add(() -> IoTUtils.deleteIoTConfigAndWait(Kubernetes.getInstance(), config));
                 }
@@ -557,9 +621,9 @@ public final class IoTTestSession implements AutoCloseable {
                 // create endpoints
 
                 final Endpoint deviceRegistryEndpoint = IoTUtils.getDeviceRegistryManagementEndpoint();
-                final DeviceRegistryClient registryClient = new DeviceRegistryClient(deviceRegistryEndpoint);
+                final DeviceRegistryClient registryClient = new DeviceRegistryClient(vertx, deviceRegistryEndpoint);
                 cleanup.add(() -> registryClient.close());
-                final CredentialsRegistryClient credentialsClient = new CredentialsRegistryClient(deviceRegistryEndpoint);
+                final CredentialsRegistryClient credentialsClient = new CredentialsRegistryClient(vertx, deviceRegistryEndpoint);
                 cleanup.add(() -> credentialsClient.close());
 
                 // create user
@@ -609,7 +673,7 @@ public final class IoTTestSession implements AutoCloseable {
 
                 // done
 
-                return new IoTTestSession(config, project, registryClient, credentialsClient, client, this.exceptionHandler, cleanup);
+                return new IoTTestSession(vertx, config, project, registryClient, credentialsClient, client, this.exceptionHandler, cleanup);
 
             } catch (Throwable e) {
 
