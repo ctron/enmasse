@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -38,7 +39,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 import io.enmasse.address.model.AddressSpace;
+import io.enmasse.iot.model.v1.AdapterConfig;
 import io.enmasse.iot.model.v1.AdapterConfigFluent;
+import io.enmasse.iot.model.v1.AdaptersConfig;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.AmqpNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.LoraWanNested;
@@ -46,6 +49,8 @@ import io.enmasse.iot.model.v1.AdaptersConfigFluent.MqttNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.SigfoxNested;
 import io.enmasse.iot.model.v1.IoTConfig;
 import io.enmasse.iot.model.v1.IoTConfigBuilder;
+import io.enmasse.iot.model.v1.IoTConfigFluent.SpecNested;
+import io.enmasse.iot.model.v1.IoTConfigSpec;
 import io.enmasse.iot.model.v1.IoTConfigSpecFluent.AdaptersNested;
 import io.enmasse.iot.model.v1.IoTProject;
 import io.enmasse.iot.model.v1.IoTProjectBuilder;
@@ -79,7 +84,7 @@ public final class IoTTestSession implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(IoTTestSession.class);
 
     public static enum Adapter {
-        AMQP {
+        AMQP(AdaptersConfig::getAmqp) {
             @Override
             public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
                 return Adapter.editAdapter(config, AdaptersConfigFluent::editOrNewAmqp, AmqpNested::endAmqp, a -> {
@@ -88,7 +93,7 @@ public final class IoTTestSession implements AutoCloseable {
                 });
             }
         },
-        HTTP {
+        HTTP(AdaptersConfig::getHttp) {
             @Override
             public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
                 return Adapter.editAdapter(config, AdaptersConfigFluent::editOrNewHttp, HttpNested::endHttp, a -> {
@@ -97,7 +102,7 @@ public final class IoTTestSession implements AutoCloseable {
                 });
             }
         },
-        MQTT {
+        MQTT(AdaptersConfig::getMqtt) {
             @Override
             public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
                 return Adapter.editAdapter(config, AdaptersConfigFluent::editOrNewMqtt, MqttNested::endMqtt, a -> {
@@ -106,7 +111,7 @@ public final class IoTTestSession implements AutoCloseable {
                 });
             }
         },
-        SIGFOX {
+        SIGFOX(AdaptersConfig::getSigfox) {
             @Override
             public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
                 return Adapter.editAdapter(config, AdaptersConfigFluent::editOrNewSigfox, SigfoxNested::endSigfox, a -> {
@@ -115,7 +120,7 @@ public final class IoTTestSession implements AutoCloseable {
                 });
             }
         },
-        LORAWAN {
+        LORAWAN(AdaptersConfig::getLoraWan) {
             @Override
             public IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer) {
                 return Adapter.editAdapter(config, AdaptersConfigFluent::editOrNewLoraWan, LoraWanNested::endLoraWan, a -> {
@@ -145,7 +150,25 @@ public final class IoTTestSession implements AutoCloseable {
 
         }
 
-        public abstract IoTConfigBuilder edit(final IoTConfigBuilder config, final Consumer<? super AdapterConfigFluent<?>> consumer);
+        private Adapter(final Function<AdaptersConfig, ? extends AdapterConfig> getter) {
+            this.getter = getter;
+        }
+
+        private final Function<AdaptersConfig, ? extends AdapterConfig> getter;
+
+        public abstract IoTConfigBuilder edit(IoTConfigBuilder config, Consumer<? super AdapterConfigFluent<?>> consumer);
+
+        public Optional<AdapterConfig> getConfig(IoTConfig config) {
+            return Optional
+                    .ofNullable(config)
+                    .map(IoTConfig::getSpec)
+                    .map(IoTConfigSpec::getAdapters)
+                    .map(adapters -> getter.apply(adapters));
+        }
+
+        public <T> T apply(final IoTConfig config, final Function<Optional<AdapterConfig>, T> function) {
+            return function.apply(getConfig(config));
+        }
 
         public IoTConfigBuilder enable(final IoTConfigBuilder config, boolean enabled) {
             return edit(config, a -> a.withEnabled(enabled));
@@ -159,6 +182,24 @@ public final class IoTTestSession implements AutoCloseable {
             return enable(config, false);
         }
 
+        /**
+         * Check if an adapter is enabled.
+         * <p>
+         * The adapter is only disabled if the field {@code enabled} is set to {@code value}.
+         * In all other cases, like null values or missing fields, the adapter is considered enabled.
+         *
+         * @param config The configuration to check.
+         * @return {@code true} if the adapter is enabled, {@code false} otherwise.
+         */
+        public boolean isEnabled(final IoTConfig config) {
+            return getConfig(config)
+                    .map(adapterConfig -> adapterConfig.getEnabled() == null || Boolean.TRUE.equals(adapterConfig.getEnabled()))
+                    .orElse(Boolean.TRUE);
+        }
+
+        public String getResourceName() {
+            return String.format("iot-%s-adapter", name().toLowerCase());
+        }
     }
 
     @FunctionalInterface
@@ -387,7 +428,8 @@ public final class IoTTestSession implements AutoCloseable {
 
     }
 
-    private AmqpAdapterClient createAmqpAdapterClient(final ProtonQoS qos, final PrivateKey key, final X509Certificate certificate, final Set<String> tlsVersions) throws Exception {
+    private AmqpAdapterClient createAmqpAdapterClient(final ProtonQoS qos, final PrivateKey key, final X509Certificate certificate, final Set<String> tlsVersions)
+            throws Exception {
 
         var endpoint = Kubernetes.getInstance().getExternalEndpoint("iot-amqp-adapter");
         var result = new AmqpAdapterClient(this.vertx, qos, endpoint, key, certificate, tlsVersions);
@@ -605,7 +647,6 @@ public final class IoTTestSession implements AutoCloseable {
                 IoTUtils.createIoTConfig(config);
 
                 // create namespace if not created
-
                 if (!Environment.getInstance().skipCleanup()) {
                     cleanup.add(() -> Kubernetes.getInstance().deleteNamespace(project.getMetadata().getNamespace()));
                 }
