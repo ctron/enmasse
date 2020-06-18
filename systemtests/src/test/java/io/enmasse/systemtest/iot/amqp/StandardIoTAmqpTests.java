@@ -6,9 +6,8 @@
 package io.enmasse.systemtest.iot.amqp;
 
 import static io.enmasse.systemtest.TestTag.ACCEPTANCE;
-import static io.vertx.proton.ProtonQoS.AT_LEAST_ONCE;
-import static io.vertx.proton.ProtonQoS.AT_MOST_ONCE;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
@@ -16,6 +15,10 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
 
 import io.enmasse.systemtest.iot.AmqpAdapterClient;
 import io.enmasse.systemtest.iot.DeviceSupplier;
@@ -25,36 +28,17 @@ import io.enmasse.systemtest.iot.StandardIoTTests;
 
 public interface StandardIoTAmqpTests extends StandardIoTTests {
 
-    /**
-     * Single telemetry message with attached consumer (at most once).
-     */
-    @Tag(ACCEPTANCE)
-    @ParameterizedTest(name = "testAmqpTelemetrySingleAtMostOnce-{0}")
-    @MethodSource("getDevices")
-    default void testAmqpTelemetrySingleAtMostOnce(final DeviceSupplier device) throws Exception {
-
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_MOST_ONCE)) {
-            new MessageSendTester()
-                    .type(MessageSendTester.Type.TELEMETRY)
-                    .delay(Duration.ofSeconds(1))
-                    .consumerFactory(ConsumerFactory.of(getSession().getConsumerClient(), getSession().getTenantId()))
-                    .sender(client)
-                    .amount(1)
-                    .consume(MessageSendTester.Consume.BEFORE)
-                    .execute();
-        }
-
-    }
+    final static Logger log = LoggerFactory.getLogger(StandardIoTAmqpTests.class);
 
     /**
-     * Single telemetry message with attached consumer (at least once).
+     * Single telemetry message with attached consumer.
      */
     @Tag(ACCEPTANCE)
-    @ParameterizedTest(name = "testAmqpTelemetrySingleAtLeastOnce-{0}")
+    @ParameterizedTest(name = "testAmqpTelemetrySingle-{0}")
     @MethodSource("getDevices")
-    default void testAmqpTelemetrySingleAtLeastOnce(final DeviceSupplier device) throws Exception {
+    default void testAmqpTelemetrySingle(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient()) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.TELEMETRY)
                     .delay(Duration.ofSeconds(1))
@@ -77,7 +61,7 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
     @MethodSource("getDevices")
     default void testAmqpEventSingle(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient()) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.EVENT)
                     .delay(Duration.ofSeconds(1))
@@ -91,37 +75,15 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
     }
 
     /**
-     * Test a batch of telemetry messages, consumer is started before sending (at most once).
+     * Test a batch of telemetry messages, consumer is started before sending.
      * <br>
      * This is the normal telemetry case.
      */
-    @ParameterizedTest(name = "testAmqpTelemetryBatch50AtMostOnce-{0}")
+    @ParameterizedTest(name = "testAmqpTelemetryBatch50-{0}")
     @MethodSource("getDevices")
-    default void testAmqpTelemetryBatch50AtMostOnce(final DeviceSupplier device) throws Exception {
+    default void testAmqpTelemetryBatch50(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_MOST_ONCE)) {
-            new MessageSendTester()
-                    .type(MessageSendTester.Type.TELEMETRY)
-                    .delay(Duration.ofSeconds(1))
-                    .consumerFactory(ConsumerFactory.of(getSession().getConsumerClient(), getSession().getTenantId()))
-                    .sender(client)
-                    .amount(50)
-                    .consume(MessageSendTester.Consume.BEFORE)
-                    .execute();
-        }
-
-    }
-
-    /**
-     * Test a batch of telemetry messages, consumer is started before sending (at least once).
-     * <br>
-     * This is the normal telemetry case.
-     */
-    @ParameterizedTest(name = "testAmqpTelemetryBatch50AtLeastOnce-{0}")
-    @MethodSource("getDevices")
-    default void testAmqpTelemetryBatch50AtLeastOnce(final DeviceSupplier device) throws Exception {
-
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient()) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.TELEMETRY)
                     .delay(Duration.ofSeconds(1))
@@ -145,7 +107,7 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
     @MethodSource("getDevices")
     default void testAmqpEventBatch5After(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_MOST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient()) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.EVENT)
                     .delay(Duration.ofMillis(100))
@@ -169,7 +131,7 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
     @MethodSource("getDevices")
     default void testAmqpEventBatch5Before(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient()) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.EVENT)
                     .delay(Duration.ZERO)
@@ -199,7 +161,7 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
          * Two separate connections, and more than one message.
          */
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.createAmqpAdapterClient()) {
             assertThrows(TimeoutException.class, () -> {
                 new MessageSendTester()
                         .type(MessageSendTester.Type.TELEMETRY)
@@ -211,8 +173,12 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
                         .execute();
             });
         }
+        catch (Exception e) {
+            assertConnectionException(e);
+            log.debug("Accepting AMQP exception", e);
+        }
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.createAmqpAdapterClient()) {
             assertThrows(TimeoutException.class, () -> {
                 new MessageSendTester()
                         .type(MessageSendTester.Type.EVENT)
@@ -224,6 +190,23 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
                         .execute();
             });
         }
+        catch (Exception e) {
+            assertConnectionException(e);
+            log.debug("Accepting AMQP exception", e);
+        }
+
+    }
+
+    public static void assertConnectionException(final Throwable e) {
+
+        // if we get an exception, it must be an AuthenticationException or SSLHandshakeException
+
+        final Throwable cause = Throwables.getRootCause(e);
+        if (cause instanceof javax.security.sasl.AuthenticationException) {
+            return;
+        }
+
+        fail("Failed to connect with non-permitted exception", e);
 
     }
 }
