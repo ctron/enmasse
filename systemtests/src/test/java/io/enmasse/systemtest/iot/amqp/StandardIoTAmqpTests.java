@@ -19,7 +19,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import io.enmasse.systemtest.iot.AmqpAdapterClient;
 import io.enmasse.systemtest.iot.DeviceSupplier;
-import io.enmasse.systemtest.iot.IoTTestSession.Device;
 import io.enmasse.systemtest.iot.MessageSendTester;
 import io.enmasse.systemtest.iot.MessageSendTester.ConsumerFactory;
 import io.enmasse.systemtest.iot.StandardIoTTests;
@@ -144,9 +143,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
      */
     @ParameterizedTest(name = "testAmqpEventBatch5After-{0}")
     @MethodSource("getDevices")
-    default void testAmqpEventBatch5After(final Device device) throws Exception {
+    default void testAmqpEventBatch5After(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_MOST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_MOST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.EVENT)
                     .delay(Duration.ofMillis(100))
@@ -168,9 +167,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
      */
     @ParameterizedTest(name = "testAmqpEventBatch5Before-{0}")
     @MethodSource("getDevices")
-    default void testAmqpEventBatch5Before(final Device device) throws Exception {
+    default void testAmqpEventBatch5Before(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.EVENT)
                     .delay(Duration.ZERO)
@@ -191,7 +190,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
      */
     @ParameterizedTest(name = "testAmqpDeviceFails-{0}")
     @MethodSource("getInvalidDevices")
-    default void testAmqpDeviceFails(final Device device) throws Exception {
+    default void testAmqpDeviceFails(final DeviceSupplier deviceSupplier) throws Exception {
+
+        var device = deviceSupplier.get();
 
         /*
          * We test an invalid device by trying to send either telemetry or event messages.
