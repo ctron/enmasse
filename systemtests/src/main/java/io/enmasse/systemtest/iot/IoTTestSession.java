@@ -44,6 +44,7 @@ import io.enmasse.iot.model.v1.AdapterConfigFluent;
 import io.enmasse.iot.model.v1.AdaptersConfig;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.AmqpNested;
+import io.enmasse.iot.model.v1.AdaptersConfigFluent.HttpNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.LoraWanNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.MqttNested;
 import io.enmasse.iot.model.v1.AdaptersConfigFluent.SigfoxNested;
@@ -75,7 +76,6 @@ import io.enmasse.systemtest.utils.UserUtils;
 import io.enmasse.user.model.v1.Operation;
 import io.enmasse.user.model.v1.User;
 import io.enmasse.user.model.v1.UserAuthorizationBuilder;
-import io.fabric8.kubernetes.api.model.extensions.IngressRuleFluent.HttpNested;
 import io.vertx.core.Vertx;
 import io.vertx.proton.ProtonQoS;
 
@@ -568,6 +568,7 @@ public final class IoTTestSession implements AutoCloseable {
             }
 
             return this;
+
         }
 
         public Builder exceptionHandler(final Consumer<Throwable> exceptionHandler) {

@@ -15,10 +15,14 @@ import java.net.HttpURLConnection;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.enmasse.iot.model.v1.IoTConfigBuilder;
 import io.enmasse.systemtest.iot.IoTTestSession;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
 
+@ExtendWith(VertxExtension.class)
 class InfinispanDeviceRegistryTest extends DeviceRegistryTest {
 
     @Override
@@ -102,7 +106,7 @@ class InfinispanDeviceRegistryTest extends DeviceRegistryTest {
 
     @Override
     @Disabled("Not supported by Infinispan")
-    public void testDeviceWithSameAuthIdOfSameTypesFails() throws Exception {
-        super.testDeviceWithSameAuthIdOfSameTypesFails();
+    public void testDeviceWithSameAuthIdOfSameTypesFails(final Vertx vertx) throws Exception {
+        super.testDeviceWithSameAuthIdOfSameTypesFails(vertx);
     }
 }

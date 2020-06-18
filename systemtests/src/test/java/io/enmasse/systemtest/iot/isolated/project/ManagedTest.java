@@ -22,6 +22,7 @@ import org.apache.qpid.proton.message.Message;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 
 import io.enmasse.address.model.Address;
@@ -54,7 +55,10 @@ import io.enmasse.user.model.v1.User;
 import io.enmasse.user.model.v1.UserList;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
 
+@ExtendWith(VertxExtension.class)
 public class ManagedTest extends TestBase implements ITestIoTIsolated {
 
     private static final String MANAGED_TEST_ADDRESSSPACE = "managed-test-addrspace";
@@ -72,7 +76,7 @@ public class ManagedTest extends TestBase implements ITestIoTIsolated {
     private UserCredentials credentials;
 
     @BeforeEach
-    public void initClients () throws Exception {
+    public void initClients (final Vertx vertx) throws Exception {
         IoTConfig iotConfig = IoTTestSession.createDefaultConfig()
                 .editOrNewSpec().withServices(newDefaultInstance()).endSpec()
                 .build();
@@ -80,8 +84,8 @@ public class ManagedTest extends TestBase implements ITestIoTIsolated {
         isolatedIoTManager.createIoTConfig(iotConfig);
 
         final Endpoint deviceRegistryEndpoint = IoTUtils.getDeviceRegistryManagementEndpoint();
-        this.registryClient = new DeviceRegistryClient(deviceRegistryEndpoint);
-        this.credentialsClient = new CredentialsRegistryClient(deviceRegistryEndpoint);
+        this.registryClient = new DeviceRegistryClient(vertx, deviceRegistryEndpoint);
+        this.credentialsClient = new CredentialsRegistryClient(vertx, deviceRegistryEndpoint);
         this.client = kubernetes.getIoTProjectClient(IOT_PROJECT_NAMESPACE);
         this.addressClient = kubernetes.getAddressClient(IOT_PROJECT_NAMESPACE);
         this.addressSpaceClient = kubernetes.getAddressSpaceClient(IOT_PROJECT_NAMESPACE);

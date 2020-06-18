@@ -41,6 +41,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 
 import io.enmasse.systemtest.Endpoint;
@@ -54,11 +55,14 @@ import io.enmasse.systemtest.iot.MessageType;
 import io.enmasse.systemtest.logs.CustomLogger;
 import io.enmasse.systemtest.utils.IoTUtils;
 import io.enmasse.systemtest.utils.TestUtils;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.junit5.VertxExtension;
 import io.vertx.proton.ProtonDelivery;
 
+@ExtendWith(VertxExtension.class)
 class CommandAndControlTest extends TestBase implements ITestIoTShared {
 
     private static Logger log = CustomLogger.getLogger();
@@ -79,12 +83,12 @@ class CommandAndControlTest extends TestBase implements ITestIoTShared {
     private int ttd;
 
     @BeforeEach
-    void init() throws Exception {
+    void init(final Vertx vertx) throws Exception {
 
         this.deviceRegistryEndpoint = IoTUtils.getDeviceRegistryManagementEndpoint();
         this.httpAdapterEndpoint = kubernetes.getExternalEndpoint("iot-http-adapter");
-        this.registryClient = new DeviceRegistryClient(this.deviceRegistryEndpoint);
-        this.credentialsClient = new CredentialsRegistryClient(this.deviceRegistryEndpoint);
+        this.registryClient = new DeviceRegistryClient(vertx, this.deviceRegistryEndpoint);
+        this.credentialsClient = new CredentialsRegistryClient(vertx, this.deviceRegistryEndpoint);
 
         // setup device information
         this.deviceId = UUID.randomUUID().toString();

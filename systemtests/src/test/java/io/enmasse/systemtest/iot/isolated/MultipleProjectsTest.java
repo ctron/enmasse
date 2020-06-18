@@ -23,6 +23,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 
@@ -52,8 +53,11 @@ import io.enmasse.user.model.v1.User;
 import io.enmasse.user.model.v1.UserAuthenticationType;
 import io.enmasse.user.model.v1.UserAuthorizationBuilder;
 import io.enmasse.user.model.v1.UserBuilder;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
 
 @Tag(TestTag.SMOKE)
+@ExtendWith(VertxExtension.class)
 class MultipleProjectsTest extends TestBase implements ITestIoTIsolated {
     private static Logger log = CustomLogger.getLogger();
     private DeviceRegistryClient registryClient;
@@ -63,15 +67,15 @@ class MultipleProjectsTest extends TestBase implements ITestIoTIsolated {
     private List<IoTProjectTestContext> projects = new ArrayList<>();
 
     @BeforeEach
-    void initEnv() throws Exception {
+    void initEnv(final Vertx vertx) throws Exception {
         IoTConfig iotConfig = IoTTestSession.createDefaultConfig()
                 .editOrNewSpec().withServices(newDefaultInstance()).endSpec()
                 .build();
         isolatedIoTManager.createIoTConfig(iotConfig);
 
         Endpoint deviceRegistryEndpoint = IoTUtils.getDeviceRegistryManagementEndpoint();
-        registryClient = new DeviceRegistryClient(deviceRegistryEndpoint);
-        credentialsClient = new CredentialsRegistryClient(deviceRegistryEndpoint);
+        registryClient = new DeviceRegistryClient(vertx, deviceRegistryEndpoint);
+        credentialsClient = new CredentialsRegistryClient(vertx, deviceRegistryEndpoint);
 
         for (int i = 1; i <= numberOfProjects; i++) {
             String projectName = String.format("project-%s", i);

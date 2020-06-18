@@ -18,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import io.enmasse.systemtest.iot.AmqpAdapterClient;
+import io.enmasse.systemtest.iot.DeviceSupplier;
 import io.enmasse.systemtest.iot.IoTTestSession.Device;
 import io.enmasse.systemtest.iot.MessageSendTester;
 import io.enmasse.systemtest.iot.MessageSendTester.ConsumerFactory;
@@ -31,9 +32,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
     @Tag(ACCEPTANCE)
     @ParameterizedTest(name = "testAmqpTelemetrySingleAtMostOnce-{0}")
     @MethodSource("getDevices")
-    default void testAmqpTelemetrySingleAtMostOnce(final Device device) throws Exception {
+    default void testAmqpTelemetrySingleAtMostOnce(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_MOST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_MOST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.TELEMETRY)
                     .delay(Duration.ofSeconds(1))
@@ -52,9 +53,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
     @Tag(ACCEPTANCE)
     @ParameterizedTest(name = "testAmqpTelemetrySingleAtLeastOnce-{0}")
     @MethodSource("getDevices")
-    default void testAmqpTelemetrySingleAtLeastOnce(final Device device) throws Exception {
+    default void testAmqpTelemetrySingleAtLeastOnce(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.TELEMETRY)
                     .delay(Duration.ofSeconds(1))
@@ -75,9 +76,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
      */
     @ParameterizedTest(name = "testAmqpEventSingle-{0}")
     @MethodSource("getDevices")
-    default void testAmqpEventSingle(final Device device) throws Exception {
+    default void testAmqpEventSingle(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.EVENT)
                     .delay(Duration.ofSeconds(1))
@@ -97,9 +98,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
      */
     @ParameterizedTest(name = "testAmqpTelemetryBatch50AtMostOnce-{0}")
     @MethodSource("getDevices")
-    default void testAmqpTelemetryBatch50AtMostOnce(final Device device) throws Exception {
+    default void testAmqpTelemetryBatch50AtMostOnce(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_MOST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_MOST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.TELEMETRY)
                     .delay(Duration.ofSeconds(1))
@@ -119,9 +120,9 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
      */
     @ParameterizedTest(name = "testAmqpTelemetryBatch50AtLeastOnce-{0}")
     @MethodSource("getDevices")
-    default void testAmqpTelemetryBatch50AtLeastOnce(final Device device) throws Exception {
+    default void testAmqpTelemetryBatch50AtLeastOnce(final DeviceSupplier device) throws Exception {
 
-        try (AmqpAdapterClient client = device.createAmqpAdapterClient(AT_LEAST_ONCE)) {
+        try (AmqpAdapterClient client = device.get().createAmqpAdapterClient(AT_LEAST_ONCE)) {
             new MessageSendTester()
                     .type(MessageSendTester.Type.TELEMETRY)
                     .delay(Duration.ofSeconds(1))
