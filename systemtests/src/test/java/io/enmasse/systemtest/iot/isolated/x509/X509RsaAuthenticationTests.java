@@ -6,6 +6,7 @@
 package io.enmasse.systemtest.iot.isolated.x509;
 
 import static io.enmasse.systemtest.TestTag.ISOLATED_IOT;
+import static io.enmasse.systemtest.iot.IoTTestSession.Adapter.AMQP;
 import static io.enmasse.systemtest.iot.IoTTestSession.Adapter.HTTP;
 import static io.enmasse.systemtest.iot.IoTTestSession.Adapter.MQTT;
 import static io.enmasse.systemtest.utils.TestUtils.toPem;
@@ -42,7 +43,7 @@ public class X509RsaAuthenticationTests implements StandardX509Cases, StandardIo
                         .endTrustAnchor()
                         .endConfiguration()
                         .endSpec())
-                .adapters(MQTT, HTTP)
+                .adapters(AMQP, MQTT, HTTP)
                 .deploy();
 
     }

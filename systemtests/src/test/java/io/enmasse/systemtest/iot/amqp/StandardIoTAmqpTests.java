@@ -172,8 +172,7 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
                         .consume(MessageSendTester.Consume.BEFORE)
                         .execute();
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             assertConnectionException(e);
             log.debug("Accepting AMQP exception", e);
         }
@@ -189,8 +188,7 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
                         .consume(MessageSendTester.Consume.BEFORE)
                         .execute();
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             assertConnectionException(e);
             log.debug("Accepting AMQP exception", e);
         }
@@ -203,6 +201,8 @@ public interface StandardIoTAmqpTests extends StandardIoTTests {
 
         final Throwable cause = Throwables.getRootCause(e);
         if (cause instanceof javax.security.sasl.AuthenticationException) {
+            return;
+        } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
             return;
         }
 
