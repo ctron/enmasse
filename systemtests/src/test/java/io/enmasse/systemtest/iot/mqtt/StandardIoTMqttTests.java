@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
@@ -245,6 +246,9 @@ public interface StandardIoTMqttTests extends StandardIoTTests {
 
         final Throwable cause = Throwables.getRootCause(e);
         if (cause instanceof SSLHandshakeException) {
+            return;
+        } else if (Throwables.getCausalChain(e).stream().filter(SSLException.class::isInstance).findAny().isPresent()) {
+            // as as SSLException in the cause chain
             return;
         }
 
