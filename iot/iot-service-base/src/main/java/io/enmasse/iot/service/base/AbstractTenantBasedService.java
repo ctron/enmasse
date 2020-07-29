@@ -70,7 +70,7 @@ public abstract class AbstractTenantBasedService extends AbstractKubernetesBased
 
     protected void startWatcher() {
 
-        log.info("Starting project watcher");
+        log.info("Starting tenant watcher");
 
         // create a new informer factory
         this.factory = getClient().inAnyNamespace().informers();
@@ -135,20 +135,20 @@ public abstract class AbstractTenantBasedService extends AbstractKubernetesBased
                         .map(project -> new IoTTenantBuilder(project).build()));
     }
 
-    protected void onAdd(final IoTTenant project) {
-        final String key = key(project);
+    protected void onAdd(final IoTTenant tenant) {
+        final String key = key(tenant);
         log.info("Added tenant: {}", key);
-        this.tenants.put(key, project);
+        this.tenants.put(key, tenant);
     }
 
-    protected void onUpdate(final IoTTenant project) {
-        final String key = key(project);
+    protected void onUpdate(final IoTTenant tenant) {
+        final String key = key(tenant);
         log.info("Modified tenant: {}", key);
-        this.tenants.put(key, project);
+        this.tenants.put(key, tenant);
     }
 
-    protected void onDelete(final IoTTenant project) {
-        final String key = key(project);
+    protected void onDelete(final IoTTenant tenant) {
+        final String key = key(tenant);
         log.info("Removed tenant: {}", key);
         this.tenants.remove(key);
     }

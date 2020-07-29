@@ -42,7 +42,7 @@ public class TenantInformation extends TenantHandle {
     protected ToStringHelper toStringHelper() {
         return super.toStringHelper()
                 .add("namespace", this.namespace)
-                .add("projectName", this.tenantName)
+                .add("tenantName", this.tenantName)
                 .add("tenant", this.tenant);
     }
 

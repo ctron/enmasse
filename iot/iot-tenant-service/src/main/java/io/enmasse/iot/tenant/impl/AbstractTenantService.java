@@ -63,9 +63,9 @@ public abstract class AbstractTenantService extends AbstractTenantBasedService i
         return get(subjectDn, NoopSpan.INSTANCE);
     }
 
-    protected TenantResult<JsonObject> convertToHono(final IoTTenant project, final SpanContext spanContext) {
+    protected TenantResult<JsonObject> convertToHono(final IoTTenant tenant, final SpanContext spanContext) {
 
-        final String tenantName = String.format("%s.%s", project.getMetadata().getNamespace(), project.getMetadata().getName());
+        final String tenantName = String.format("%s.%s", tenant.getMetadata().getNamespace(), tenant.getMetadata().getName());
 
         final Span span = TracingHelper
                 .buildChildSpan(this.tracer, spanContext, "convertToHono", getClass().getSimpleName())
@@ -74,7 +74,7 @@ public abstract class AbstractTenantService extends AbstractTenantBasedService i
 
         try {
 
-            if (project.getStatus() == null || project.getStatus().getAccepted() == null) {
+            if (tenant.getStatus() == null || tenant.getStatus().getAccepted() == null) {
                 // controller has not yet processed the configuration ... handle as "not found"
                 log.info("IoTTenant is missing '.status.accepted' section");
                 TracingHelper.logError(span, "IoTTenant is missing '.status.accepted' section");
@@ -82,7 +82,7 @@ public abstract class AbstractTenantService extends AbstractTenantBasedService i
                 return RESULT_NOT_FOUND;
             }
 
-            if (project.getStatus().getAccepted().getConfiguration() == null) {
+            if (tenant.getStatus().getAccepted().getConfiguration() == null) {
                 // controller processed the configuration, but rejected it ... handle as "not found"
                 log.info("IoTTenant rejected the tenant configuration");
                 TracingHelper.logError(span, "IoTTenant rejected the tenant configuration");
@@ -92,7 +92,7 @@ public abstract class AbstractTenantService extends AbstractTenantBasedService i
 
             // get configuration as JsonObject
 
-            final JsonObject payload = JsonObject.mapFrom(project.getStatus().getAccepted().getConfiguration());
+            final JsonObject payload = JsonObject.mapFrom(tenant.getStatus().getAccepted().getConfiguration());
 
             // remove invalid trust anchors, as this involves the current time, we cannot
             // prepare this, and only do it on a "per-request" basis.
